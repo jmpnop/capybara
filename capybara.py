@@ -785,9 +785,41 @@ Mobile App Setup:
                 click.echo(output if output else "No logs found")
                 click.echo()
 
+            if service == 'shadowsocks' or service == 'all':
+                click.echo(f"{Fore.CYAN}=== Shadowsocks Logs ===")
+                # Try multiple log locations (systemd journal, syslog, or dedicated log file)
+                cmd = f"""
+                if [ -f /var/log/shadowsocks.log ]; then
+                    tail -n {lines} /var/log/shadowsocks.log
+                elif command -v journalctl >/dev/null 2>&1; then
+                    journalctl -u shadowsocks* -n {lines} --no-pager 2>/dev/null || \
+                    journalctl -u ss-server -n {lines} --no-pager 2>/dev/null || \
+                    echo "No Shadowsocks systemd logs found"
+                else
+                    grep -i shadowsocks /var/log/messages 2>/dev/null | tail -n {lines} || \
+                    echo "No Shadowsocks logs found"
+                fi
+                """
+                output, _, _ = ssh.execute(cmd, check_error=False)
+                click.echo(output if output else "No logs found")
+                click.echo()
+
+            if service == 'v2ray' or service == 'all':
+                click.echo(f"{Fore.CYAN}=== V2Ray Access Logs ===")
+                cmd = f"tail -n {lines} /var/log/v2ray/access.log 2>/dev/null || echo 'No V2Ray access logs found'"
+                output, _, _ = ssh.execute(cmd, check_error=False)
+                click.echo(output if output else "No logs found")
+                click.echo()
+
+                click.echo(f"{Fore.CYAN}=== V2Ray Error Logs ===")
+                cmd = f"tail -n {lines} /var/log/v2ray/error.log 2>/dev/null || echo 'No V2Ray error logs found'"
+                output, _, _ = ssh.execute(cmd, check_error=False)
+                click.echo(output if output else "No logs found")
+                click.echo()
+
             if service == 'system' or service == 'all':
                 click.echo(f"{Fore.CYAN}=== System Logs (relevant) ===")
-                cmd = f"dmesg | grep -i 'wireguard\\|udp2raw\\|wg0' | tail -n {lines}"
+                cmd = f"dmesg | grep -i 'wireguard\\|udp2raw\\|wg0\\|shadowsocks\\|v2ray' | tail -n {lines}"
                 output, _, _ = ssh.execute(cmd, check_error=False)
                 click.echo(output if output else "No relevant system logs")
 
@@ -796,10 +828,25 @@ Mobile App Setup:
         with SSHConnection(self.config) as ssh:
             click.echo(f"{Fore.CYAN}Following {service} logs (Ctrl+C to stop)...")
             click.echo()
+
             if service == 'udp2raw':
                 cmd = "tail -f /var/log/udp2raw.log"
             elif service == 'wireguard':
                 cmd = f"journalctl -u wg-quick@{self.config['vpn']['interface']} -f"
+            elif service == 'shadowsocks':
+                # Try multiple locations for Shadowsocks logs
+                cmd = """
+                if [ -f /var/log/shadowsocks.log ]; then
+                    tail -f /var/log/shadowsocks.log
+                elif command -v journalctl >/dev/null 2>&1; then
+                    journalctl -u shadowsocks* -f 2>/dev/null || journalctl -u ss-server -f 2>/dev/null
+                else
+                    tail -f /var/log/messages | grep -i shadowsocks
+                fi
+                """
+            elif service == 'v2ray':
+                # Follow both access and error logs
+                cmd = "tail -f /var/log/v2ray/access.log /var/log/v2ray/error.log"
             else:
                 cmd = "dmesg -w"
 
@@ -1165,6 +1212,8 @@ def cli():
       capybara.py user add alice              Add user (auto QR code)
       capybara.py connection list             View active connections
       capybara.py health check                System health
+      capybara.py logs show --service shadowsocks View Shadowsocks logs
+      capybara.py logs show --service v2ray View V2Ray logs
       capybara.py logs show --service udp2raw View obfuscation logs
 
     Documentation: https://github.com/jmpnop/capybara
@@ -1602,19 +1651,22 @@ def config():
 @cli.group()
 def logs():
     """
-    View server logs (WireGuard, udp2raw, system).
+    View server logs for all protocols (WireGuard, Shadowsocks, V2Ray, udp2raw, system).
 
     Examples:
-      capybara.py logs show                       # View all logs
-      capybara.py logs show --service udp2raw     # Service-specific
-      capybara.py logs show --lines 100           # Show more lines
+      capybara.py logs show                          # View all logs
+      capybara.py logs show --service wireguard      # WireGuard logs only
+      capybara.py logs show --service shadowsocks    # Shadowsocks logs only
+      capybara.py logs show --service v2ray          # V2Ray logs only
+      capybara.py logs show --service udp2raw        # udp2raw logs only
+      capybara.py logs show --lines 100              # Show more lines
       capybara.py logs tail                       # Follow logs live
     """
     pass
 
 
 @logs.command('show')
-@click.option('--service', '-s', type=click.Choice(['all', 'wireguard', 'udp2raw', 'system']), default='all', help='Service to show logs for')
+@click.option('--service', '-s', type=click.Choice(['all', 'wireguard', 'udp2raw', 'shadowsocks', 'v2ray', 'system']), default='all', help='Service to show logs for')
 @click.option('--lines', '-n', default=50, help='Number of lines to show')
 def logs_show(service, lines):
     """Show server logs"""
@@ -1629,7 +1681,7 @@ def logs_show(service, lines):
 
 
 @logs.command('tail')
-@click.option('--service', '-s', type=click.Choice(['udp2raw', 'wireguard', 'system']), default='udp2raw', help='Service to follow')
+@click.option('--service', '-s', type=click.Choice(['udp2raw', 'wireguard', 'shadowsocks', 'v2ray', 'system']), default='udp2raw', help='Service to follow')
 def logs_tail(service):
     """Follow logs in real-time (Ctrl+C to stop)"""
     config = load_config()
