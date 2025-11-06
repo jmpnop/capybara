@@ -11,15 +11,33 @@ Complete guide to all available documentation for the Capybara VPN management sy
 **When to read:** First thing - understand what Capybara does
 **Contains:**
 - Feature overview
-- Quick installation
+- Complete solution description (server + management)
+- Quick installation (both parts)
 - Basic commands
 - Links to all other docs
 
-### 2. [QUICK_START.md](QUICK_START.md)
-**What:** 5-minute quick start guide
-**When to read:** After reading README, before first use
+### 2. [install_vpn_server.sh](install_vpn_server.sh) 🔧
+**What:** Automated server installation script
+**When to read:** When setting up a new VPN server
 **Contains:**
-- Installation steps
+- One-command installation for Alpine Linux
+- WireGuard + udp2raw obfuscation setup
+- Firewall configuration (awall)
+- Automatic startup configuration
+- Complete server setup in ~2 minutes
+
+**Usage:**
+```bash
+wget https://raw.githubusercontent.com/jmpnop/copybara/main/install_vpn_server.sh
+chmod +x install_vpn_server.sh
+./install_vpn_server.sh
+```
+
+### 3. [QUICK_START.md](QUICK_START.md)
+**What:** 5-minute quick start guide for management tool
+**When to read:** After server installation, before first use
+**Contains:**
+- Management tool installation
 - First VPN user setup
 - Basic workflows
 - Common commands
@@ -142,9 +160,10 @@ Complete guide to all available documentation for the Capybara VPN management sy
 
 ### "I want to set up a VPN server from scratch"
 1. Read [README.md](README.md) - Overview
-2. Follow [CLAUDE.md](CLAUDE.md) - Server setup
-3. Read [QUICK_START.md](QUICK_START.md) - First user
-4. Use [CLIENT_SETUP.md](CLIENT_SETUP.md) - Connect devices
+2. Run [install_vpn_server.sh](install_vpn_server.sh) - Automated setup (2 minutes!)
+3. Or manually follow [CLAUDE.md](CLAUDE.md) - Step-by-step server setup
+4. Read [QUICK_START.md](QUICK_START.md) - Install management tool and add first user
+5. Use [CLIENT_SETUP.md](CLIENT_SETUP.md) - Connect devices
 
 ### "I want to connect my Mac to the VPN"
 1. Go directly to [CLIENT_SETUP.md](CLIENT_SETUP.md)
@@ -188,18 +207,21 @@ Complete guide to all available documentation for the Capybara VPN management sy
 
 | Document | Size | Lines | Words | Purpose |
 |----------|------|-------|-------|---------|
+| install_vpn_server.sh | 11KB | ~450 | 1,500 | Server installation 🔧 |
 | README.md | 9KB | ~310 | 2,500 | Main overview |
 | CLIENT_SETUP.md | 15KB | ~700 | 5,000+ | Client setup ⭐ |
+| CLIENT_SETUP_RU.md | 24KB | ~700 | 5,000+ | Client setup (RU) 🇷🇺 |
 | FULL_FEATURES_GUIDE.md | 16KB | ~500 | 12,000+ | Feature guide |
-| CLAUDE.md | 15KB | ~500 | 4,000 | Server setup |
+| CLAUDE.md | 15KB | ~500 | 4,000 | Manual server setup |
 | IMPLEMENTATION_SUMMARY.md | 14KB | ~600 | 4,000 | Implementation record |
 | FEATURE_IDEAS.md | 14KB | ~450 | 3,500 | Future features |
 | VPN_MANAGER_README.md | 15KB | ~500 | 4,000 | Technical docs |
 | QUICK_START.md | 6KB | ~200 | 1,500 | Quick start |
 | CHEATSHEET.md | 9KB | ~300 | 2,000 | Command reference |
 | QUICK_REFERENCE.md | 2.4KB | ~100 | 800 | Feature summary |
+| DOCUMENTATION_INDEX.md | 10KB | ~350 | 2,500 | This document |
 
-**Total Documentation:** ~110KB / ~4,000 lines / ~40,000 words
+**Total Documentation:** ~160KB / ~5,500 lines / ~50,000 words
 
 ---
 

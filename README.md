@@ -1,10 +1,52 @@
-# 🦫 Capybara - WireGuard VPN Manager
+# 🦫 Capybara - Complete WireGuard VPN Solution
 
-**Capybara** is a comprehensive Python-based command-line tool for managing your remote WireGuard VPN server via SSH. It's like having a friendly capybara 🦫 helping you manage your VPN infrastructure!
+**Capybara** is a complete WireGuard VPN solution that includes:
+1. **🔧 Automated Server Setup** - One-command installation script for Alpine Linux with udp2raw obfuscation
+2. **💻 Management CLI Tool** - Comprehensive Python-based command-line tool for managing your VPN server via SSH
+
+Deploy a censorship-resistant VPN server with DPI evasion and manage it effortlessly. It's like having a friendly capybara 🦫 helping you set up and manage your entire VPN infrastructure!
 
 ## Why Capybara?
 
-Capybaras are known for being calm, social, and excellent at managing their environments - just like this tool helps you calmly and efficiently manage your VPN users and resources!
+Capybaras are known for being calm, social, and excellent at managing their environments - just like this tool helps you calmly set up and efficiently manage your VPN server and users!
+
+## 🚀 Quick Start
+
+### Part 1: Server Installation (One Command!)
+
+Set up a WireGuard VPN server with udp2raw obfuscation on Alpine Linux:
+
+```bash
+# On your Alpine Linux VPS, run:
+wget https://raw.githubusercontent.com/jmpnop/copybara/main/install_vpn_server.sh
+chmod +x install_vpn_server.sh
+./install_vpn_server.sh
+```
+
+**What it does:**
+- Installs WireGuard + udp2raw (DPI evasion)
+- Configures firewall (awall)
+- Generates server keys
+- Sets up automatic startup
+- Configures obfuscation on port 443 (disguised as HTTPS)
+
+**Supported:** Alpine Linux 3.20+
+
+### Part 2: Management Tool Installation
+
+On your local machine (macOS, Linux, Windows):
+
+```bash
+git clone https://github.com/jmpnop/copybara.git
+cd copybara
+pip3 install -r requirements.txt
+chmod +x capybara.py
+
+# Create alias (optional)
+echo 'alias vpn="python3 /path/to/capybara.py"' >> ~/.zshrc
+```
+
+Then configure `~/.capybara_config.yaml` with your server details and start managing!
 
 ## Features
 
@@ -25,17 +67,9 @@ Capybaras are known for being calm, social, and excellent at managing their envi
 - 🏥 **System Health** - Monitor CPU, memory, disk, and network
 - 📈 **Reports & Analytics** - Generate usage reports in text, JSON, or CSV
 
-## Quick Start
+## Basic Usage
 
-### Installation
-
-```bash
-cd /Users/pasha/PycharmProjects/o
-pip3 install -r requirements.txt
-chmod +x capybara.py
-```
-
-### Basic Commands
+After completing both Part 1 (Server Installation) and Part 2 (Management Tool Installation), you can start managing your VPN:
 
 ```bash
 # Add a new VPN user
@@ -77,14 +111,23 @@ vpn server status
 
 ## Documentation
 
+### Server Setup
+- **[install_vpn_server.sh](install_vpn_server.sh)** - 🔧 Automated server installation script
+- **[VPN Server Setup Guide](CLAUDE.md)** - Manual step-by-step server setup
+
+### Management Tool
 - **[Quick Start Guide](QUICK_START.md)** - Get up and running in 5 minutes
-- **[Client Setup Guide](CLIENT_SETUP.md)** - ⭐ **NEW!** Complete guide for macOS and iOS clients
-  - **[Russian version](CLIENT_SETUP_RU.md)** - 🇷🇺 Руководство на русском языке
-- **[Full Features Guide](FULL_FEATURES_GUIDE.md)** - Complete guide for all new features
-- **[Complete Documentation](VPN_MANAGER_README.md)** - Full feature documentation
+- **[Full Features Guide](FULL_FEATURES_GUIDE.md)** - Complete guide for all features
 - **[Command Cheatsheet](CHEATSHEET.md)** - Quick reference for all commands
+- **[Complete Documentation](VPN_MANAGER_README.md)** - Full feature documentation
+
+### Client Setup
+- **[Client Setup Guide](CLIENT_SETUP.md)** - ⭐ Complete guide for macOS and iOS clients
+  - **[Russian version](CLIENT_SETUP_RU.md)** - 🇷🇺 Руководство на русском языке
+
+### Reference
+- **[Documentation Index](DOCUMENTATION_INDEX.md)** - Complete documentation catalog
 - **[Feature Ideas](FEATURE_IDEAS.md)** - Future enhancements and roadmap
-- **[VPN Server Setup](CLAUDE.md)** - How to set up the WireGuard server
 
 ## Command Overview
 
