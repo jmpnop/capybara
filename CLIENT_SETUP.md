@@ -13,18 +13,39 @@ Every user automatically gets configurations for all three protocols!
 
 ## 🎯 Quick Start - Which Protocol Should I Use?
 
-Choose based on your device and network conditions:
+### Mobile Users (iPhone/iPad/Android)
+
+**You have TWO great options - both work perfectly on mobile:**
+
+| Protocol | Speed | Obfuscation | Best For | iOS App |
+|----------|-------|-------------|----------|---------|
+| **Shadowsocks** ⭐ | ⭐⭐⭐⭐ Fast | ⭐⭐⭐⭐ Good | Normal use, daily browsing | Shadowrocket ($2.99) |
+| **V2Ray** 🔒 | ⭐⭐⭐ Medium | ⭐⭐⭐⭐⭐ Maximum | Heavy censorship (China, Iran) | Shadowrocket ($2.99) |
+
+**💡 Pro Tip:** Shadowrocket supports BOTH protocols! Buy it once, scan both QR codes, switch with one tap.
+
+### Desktop Users (macOS/Windows/Linux)
 
 | Your Situation | Recommended Protocol | Why? |
 |----------------|---------------------|------|
-| **MacOS desktop** | WireGuard + udp2raw | Fastest, best obfuscation |
-| **iPhone/iPad** | Shadowsocks | Native app support, QR setup |
-| **Android phone** | Shadowsocks | Native app support, QR setup |
-| **Highly censored network** | V2Ray | Strongest obfuscation |
-| **First protocol blocked** | Switch to another | You have all 3! |
-| **Traveling** | Shadowsocks → V2Ray | Mobile friendly with fallback |
+| **MacOS desktop** | WireGuard + udp2raw | Fastest (⭐⭐⭐⭐⭐), excellent obfuscation |
+| **Need backup** | Shadowsocks or V2Ray | Also available on macOS |
 
-**Pro tip:** Set up all three on your devices for maximum redundancy!
+### By Network Conditions
+
+| Your Location/Network | Try First | If Blocked, Use |
+|----------------------|-----------|-----------------|
+| **Normal internet** | Shadowsocks | V2Ray |
+| **China 🇨🇳** | V2Ray | Shadowsocks |
+| **Russia 🇷🇺** | Shadowsocks | V2Ray |
+| **Iran 🇮🇷** | V2Ray | Shadowsocks |
+| **Corporate network** | WireGuard (desktop) | Shadowsocks |
+| **Traveling** | Shadowsocks | V2Ray |
+
+**⚡ Quick Answer:**
+- **iPhone in USA/Europe?** → Use Shadowsocks (faster)
+- **iPhone in China/Iran?** → Use V2Ray (stronger)
+- **Have Shadowrocket?** → Set up BOTH, switch when needed!
 
 ---
 
@@ -56,13 +77,69 @@ Before setting up a client, you need:
 
 ---
 
+## 📱 iPhone/iPad Users - Start Here!
+
+**Good news:** Both Shadowsocks AND V2Ray work perfectly on iPhone!
+
+### One App for Both Protocols
+
+**Buy Shadowrocket ($2.99)** - It supports BOTH Shadowsocks and V2Ray!
+
+**Setup takes 1 minute:**
+1. Open App Store → Buy "Shadowrocket" ($2.99)
+2. Open Shadowrocket → Tap **+** → **Scan QR Code**
+3. Scan your `shadowsocks_qr.png` ✅
+4. Tap **+** again → **Scan QR Code**
+5. Scan your `v2ray_qr.png` ✅
+6. Now you have BOTH protocols!
+
+**Switching protocols:** Just tap the server name in Shadowrocket.
+
+### Which One to Use?
+
+| Situation | Use This |
+|-----------|----------|
+| 🌍 **Normal browsing** (USA, Europe) | Shadowsocks (faster) |
+| 🇨🇳 **In China** | V2Ray (stronger obfuscation) |
+| 🇷🇺 **In Russia** | Try Shadowsocks first, V2Ray if blocked |
+| 🇮🇷 **In Iran** | V2Ray (most reliable) |
+| 🏢 **Corporate WiFi** | Try Shadowsocks, then V2Ray |
+| ✈️ **Traveling** | Have both ready! |
+
+**Jump to instructions:**
+- [Shadowsocks iOS Setup](#-ios-setup-shadowsocks) (recommended for most users)
+- [V2Ray iOS Setup](#-ios-setup-v2ray) (recommended for heavy censorship)
+
+---
+
 ## 📑 Table of Contents
 
+### 📱 Mobile Setup (iPhone/iPad/Android)
+Both Shadowsocks and V2Ray work great on mobile!
+
+- **[Shadowsocks on iOS](#-ios-setup-shadowsocks)** - Fast, easy QR setup
+- **[Shadowsocks on Android](#-android-setup-shadowsocks)** - Free app, QR setup
+- **[V2Ray on iOS](#-ios-setup-v2ray)** - Strongest obfuscation (same Shadowrocket app!)
+- **[V2Ray on Android](#-android-setup-v2ray)** - Free v2rayNG app
+
+### 💻 Desktop Setup (macOS/Windows/Linux)
+
+- **[WireGuard + udp2raw on macOS](#-macos-setup-wireguard--udp2raw)** - Fastest option
+- **[Shadowsocks on macOS](#-macos-setup-shadowsocks)** - Alternative option
+- **[V2Ray on macOS](#-macos-setup-v2ray)** - Backup option
+
+### 📚 Additional Resources
+
+- **[Troubleshooting All Protocols](#-troubleshooting)** - Common issues and fixes
+- **[Testing Your Connection](#-testing-your-connection)** - Verify it works
+- **[Country-Specific Notes](#-country-specific-notes)** - China, Russia, Iran, etc.
+- **[Emergency Procedures](#-emergency-procedures)** - Protocol switching guide
+
+### 📖 Full Protocol Documentation
+
 - [Protocol 1: WireGuard + udp2raw (Desktop)](#protocol-1-wireguard--udp2raw)
-- [Protocol 2: Shadowsocks (Mobile Friendly)](#protocol-2-shadowsocks)
-- [Protocol 3: V2Ray (Maximum Obfuscation)](#protocol-3-v2ray)
-- [Troubleshooting](#troubleshooting)
-- [Testing Your Connection](#testing-your-connection)
+- [Protocol 2: Shadowsocks (Mobile & Desktop)](#protocol-2-shadowsocks)
+- [Protocol 3: V2Ray (Mobile & Desktop)](#protocol-3-v2ray)
 
 ---
 
@@ -275,12 +352,15 @@ Use your Mac as a proxy for iOS devices:
 
 # Protocol 2: Shadowsocks
 
-**Best for:** Mobile devices (iOS, Android), quick setup
+**Best for:** Mobile devices (iOS, Android) + macOS
 **Speed:** ⭐⭐⭐⭐ (Fast)
-**Mobile:** ⭐⭐⭐⭐⭐ (Excellent - native apps)
+**Mobile:** ⭐⭐⭐⭐⭐ (Excellent - iOS/Android native apps with QR codes)
 **Obfuscation:** ⭐⭐⭐⭐ (Good - AEAD encryption)
+**iOS App:** Shadowrocket ($2.99) - also supports V2Ray!
 
 Shadowsocks is perfect for mobile devices with native app support and QR code setup. Uses AEAD encryption (chacha20-ietf-poly1305) for security and obfuscation.
+
+**iOS Users:** Shadowrocket supports BOTH Shadowsocks and V2Ray - buy once, use both!
 
 ## 📱 iOS Setup (Shadowsocks)
 
@@ -448,12 +528,15 @@ ss-local -c ~/shadowsocks.json
 
 # Protocol 3: V2Ray
 
-**Best for:** Highly restrictive networks, maximum obfuscation
-**Speed:** ⭐⭐⭐ (Medium)
-**Mobile:** ⭐⭐⭐⭐⭐ (Excellent - native apps)
-**Obfuscation:** ⭐⭐⭐⭐⭐ (Maximum - advanced techniques)
+**Best for:** Highly restrictive networks (China, Iran), maximum obfuscation
+**Speed:** ⭐⭐⭐ (Medium - slower due to heavy obfuscation)
+**Mobile:** ⭐⭐⭐⭐⭐ (Excellent - iOS/Android native apps with QR codes)
+**Obfuscation:** ⭐⭐⭐⭐⭐ (Maximum - hardest to block)
+**iOS App:** Shadowrocket ($2.99) - same app as Shadowsocks!
 
-V2Ray provides the strongest obfuscation using the VMess protocol. Perfect as a backup when other protocols are blocked.
+V2Ray provides the strongest obfuscation using the VMess protocol. Perfect as a backup when other protocols are blocked, and essential for heavily censored networks.
+
+**iOS Users:** If you already bought Shadowrocket for Shadowsocks, you can use V2Ray too - just scan the V2Ray QR code!
 
 ## 📱 iOS Setup (V2Ray)
 
