@@ -18,7 +18,7 @@ Set up a WireGuard VPN server with udp2raw obfuscation on Alpine Linux:
 
 ```bash
 # On your Alpine Linux VPS, run:
-wget https://raw.githubusercontent.com/jmpnop/copybara/main/install_vpn_server.sh
+wget https://raw.githubusercontent.com/jmpnop/capybara/main/install_vpn_server.sh
 chmod +x install_vpn_server.sh
 ./install_vpn_server.sh
 ```
@@ -37,8 +37,8 @@ chmod +x install_vpn_server.sh
 On your local machine (macOS, Linux, Windows):
 
 ```bash
-git clone https://github.com/jmpnop/copybara.git
-cd copybara
+git clone https://github.com/jmpnop/capybara.git
+cd capybara
 pip3 install -r requirements.txt
 chmod +x capybara.py
 

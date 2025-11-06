@@ -338,7 +338,7 @@ Startup:
 - /etc/local.d/wireguard.start
 
 Management Tool:
-https://github.com/jmpnop/copybara
+https://github.com/jmpnop/capybara
 EOF
 
 log_success "Installation info saved to /root/vpn_install_info.txt"

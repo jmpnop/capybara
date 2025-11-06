@@ -28,7 +28,7 @@ Complete guide to all available documentation for the Capybara VPN management sy
 
 **Usage:**
 ```bash
-wget https://raw.githubusercontent.com/jmpnop/copybara/main/install_vpn_server.sh
+wget https://raw.githubusercontent.com/jmpnop/capybara/main/install_vpn_server.sh
 chmod +x install_vpn_server.sh
 ./install_vpn_server.sh
 ```
