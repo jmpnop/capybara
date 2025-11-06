@@ -13,6 +13,9 @@ import yaml
 import paramiko
 import click
 import qrcode
+import base64
+import uuid
+import hashlib
 from pathlib import Path
 from datetime import datetime
 from tabulate import tabulate
@@ -136,51 +139,170 @@ class VPNManager:
 
         return f"10.7.0.{next_ip}"
 
+    def generate_ss_password(self, username):
+        """Generate deterministic Shadowsocks password from username"""
+        # Use PBKDF2 to generate a strong password from username
+        salt = b'capybara_ss_salt_2025'
+        key = hashlib.pbkdf2_hmac('sha256', username.encode(), salt, 100000, dklen=16)
+        return base64.b64encode(key).decode('utf-8')
+
+    def generate_v2ray_uuid(self, username):
+        """Generate deterministic V2Ray UUID from username"""
+        # Generate UUID v5 from namespace UUID and username
+        namespace = uuid.UUID('6ba7b810-9dad-11d1-80b4-00c04fd430c8')  # DNS namespace
+        return str(uuid.uuid5(namespace, f'capybara-v2ray-{username}'))
+
+    def create_ss_qr(self, method, password, server, port):
+        """Create Shadowsocks QR code"""
+        # Format: ss://base64(method:password)@server:port
+        credential = f"{method}:{password}"
+        encoded = base64.b64encode(credential.encode()).decode()
+        ss_url = f"ss://{encoded}@{server}:{port}"
+        return ss_url
+
+    def create_v2ray_qr(self, uuid_str, server, port, alterId=0):
+        """Create V2Ray VMess QR code"""
+        # VMess format
+        vmess_config = {
+            "v": "2",
+            "ps": f"Capybara-{server}",
+            "add": server,
+            "port": str(port),
+            "id": uuid_str,
+            "aid": str(alterId),
+            "net": "tcp",
+            "type": "none",
+            "host": "",
+            "path": "",
+            "tls": ""
+        }
+        json_str = json.dumps(vmess_config)
+        encoded = base64.b64encode(json_str.encode()).decode()
+        return f"vmess://{encoded}"
+
+    def add_shadowsocks_user(self, ssh, username, password, port=8388):
+        """Add user to Shadowsocks"""
+        # Create user-specific config file
+        user_config = {
+            "server": "0.0.0.0",
+            "server_port": port + hash(username) % 1000,  # Unique port per user
+            "password": password,
+            "method": "chacha20-ietf-poly1305",
+            "timeout": 300,
+            "fast_open": True,
+            "mode": "tcp_and_udp"
+        }
+
+        config_path = f"/etc/shadowsocks-libev/users/{username}.json"
+        config_json = json.dumps(user_config, indent=2)
+
+        # Write config
+        ssh.execute(f"mkdir -p /etc/shadowsocks-libev/users")
+        ssh.execute(f"cat > {config_path} << 'EOFSS'\n{config_json}\nEOFSS")
+
+        # Start user's SS instance (using ssserver from shadowsocks-rust)
+        ssh.execute(f"ssserver -c {config_path} &", check_error=False)
+
+        return user_config["server_port"]
+
+    def add_v2ray_user(self, ssh, username, user_uuid):
+        """Add user to V2Ray"""
+        # Read current V2Ray config
+        output, _, _ = ssh.execute("cat /etc/v2ray/config.json")
+        v2ray_config = json.loads(output)
+
+        # Add user to clients
+        new_client = {
+            "id": user_uuid,
+            "alterId": 0,
+            "email": f"{username}@capybara"
+        }
+
+        if "inbounds" in v2ray_config and len(v2ray_config["inbounds"]) > 0:
+            if "settings" not in v2ray_config["inbounds"][0]:
+                v2ray_config["inbounds"][0]["settings"] = {}
+            if "clients" not in v2ray_config["inbounds"][0]["settings"]:
+                v2ray_config["inbounds"][0]["settings"]["clients"] = []
+
+            # Check if user already exists
+            existing = False
+            for client in v2ray_config["inbounds"][0]["settings"]["clients"]:
+                if client.get("email") == f"{username}@capybara":
+                    existing = True
+                    break
+
+            if not existing:
+                v2ray_config["inbounds"][0]["settings"]["clients"].append(new_client)
+
+        # Write updated config
+        config_json = json.dumps(v2ray_config, indent=2)
+        ssh.execute(f"cat > /etc/v2ray/config.json << 'EOFV2'\n{config_json}\nEOFV2")
+
+        # Restart V2Ray
+        ssh.execute("rc-service v2ray restart", check_error=False)
+
     def add_user(self, username, description=""):
-        """Add a new VPN user"""
+        """Add a new VPN user to all protocols (WireGuard, Shadowsocks, V2Ray)
+
+        Args:
+            username: Username for the VPN user
+            description: Optional description
+        """
         with SSHConnection(self.config) as ssh:
-            click.echo(f"{Fore.YELLOW}Generating keys for user '{username}'...")
+            # Always use all three protocols
+            protocols_list = ["wireguard", "shadowsocks", "v2ray"]
 
-            # Generate keys
-            private_key, public_key = self.generate_client_keys(ssh)
-
-            # Get next available IP
-            client_ip = self.get_next_ip(ssh)
-
-            # Save keys to server with username
             timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-            key_prefix = f"/etc/wireguard/clients/{username}_{timestamp}"
+            client_dir = Path.cwd() / 'vpn_clients'
+            client_dir.mkdir(exist_ok=True)
 
-            # Create clients directory
-            ssh.execute("mkdir -p /etc/wireguard/clients")
+            # Get server IP
+            server_ip = self.config['server']['host']
 
-            # Save keys
-            ssh.execute(f"echo '{private_key}' > {key_prefix}_private.key")
-            ssh.execute(f"echo '{public_key}' > {key_prefix}_public.key")
-            ssh.execute(f"chmod 600 {key_prefix}_*.key")
+            results = {
+                'username': username,
+                'description': description,
+                'protocols': {},
+                'qr_codes': {}
+            }
 
-            # Add peer to server config
-            peer_config = f"""
+            # ========== WireGuard Setup ==========
+            if "wireguard" in protocols_list:
+                click.echo(f"\n{Fore.CYAN}{'='*60}")
+                click.echo(f"{Fore.YELLOW}Setting up WireGuard for '{username}'...")
+
+                # Generate keys
+                private_key, public_key = self.generate_client_keys(ssh)
+
+                # Get next available IP
+                client_ip = self.get_next_ip(ssh)
+
+                # Save keys to server
+                key_prefix = f"/etc/wireguard/clients/{username}_{timestamp}"
+                ssh.execute("mkdir -p /etc/wireguard/clients")
+                ssh.execute(f"echo '{private_key}' > {key_prefix}_private.key")
+                ssh.execute(f"echo '{public_key}' > {key_prefix}_public.key")
+                ssh.execute(f"chmod 600 {key_prefix}_*.key")
+
+                # Add peer to server config
+                peer_config = f"""
 # User: {username} | IP: {client_ip} | Created: {timestamp}
 # Description: {description}
 [Peer]
 PublicKey = {public_key}
 AllowedIPs = {client_ip}/32
 """
+                cmd = f"cat >> {self.config['vpn']['config_path']} << 'EOFPEER'\n{peer_config}\nEOFPEER"
+                ssh.execute(cmd)
 
-            # Escape for shell
-            cmd = f"cat >> {self.config['vpn']['config_path']} << 'EOFPEER'\n{peer_config}\nEOFPEER"
-            ssh.execute(cmd)
+                # Reload WireGuard
+                ssh.execute(f"wg syncconf {self.config['vpn']['interface']} <(wg-quick strip {self.config['vpn']['interface']})")
 
-            # Reload WireGuard
-            click.echo(f"{Fore.YELLOW}Reloading WireGuard configuration...")
-            ssh.execute(f"wg syncconf {self.config['vpn']['interface']} <(wg-quick strip {self.config['vpn']['interface']})")
+                # Generate client config
+                server_output, _, _ = ssh.execute(f"cat /etc/wireguard/server_public.key")
+                server_pubkey = server_output.strip()
 
-            # Generate client config
-            server_output, _, _ = ssh.execute(f"cat /etc/wireguard/server_public.key")
-            server_pubkey = server_output.strip()
-
-            client_config = f"""[Interface]
+                client_config = f"""[Interface]
 PrivateKey = {private_key}
 Address = {client_ip}/24
 MTU = 1280
@@ -193,54 +315,180 @@ Endpoint = 127.0.0.1:4096
 PersistentKeepalive = 25
 """
 
-            # Save client config locally
-            client_dir = Path.cwd() / 'vpn_clients'
-            client_dir.mkdir(exist_ok=True)
+                # Save client config
+                config_file = client_dir / f"{username}_{timestamp}_wireguard.conf"
+                config_file.write_text(client_config)
 
-            config_file = client_dir / f"{username}_{timestamp}.conf"
-            config_file.write_text(client_config)
+                # Generate QR code
+                try:
+                    qr_file = client_dir / f"{username}_{timestamp}_wireguard_qr.png"
+                    qr = qrcode.QRCode(
+                        version=None,
+                        error_correction=qrcode.constants.ERROR_CORRECT_L,
+                        box_size=10,
+                        border=4,
+                    )
+                    qr.add_data(client_config)
+                    qr.make(fit=True)
+                    img = qr.make_image(fill_color="black", back_color="white")
+                    img.save(str(qr_file))
 
-            click.echo(f"{Fore.GREEN}✓ User '{username}' added successfully!")
-            click.echo(f"{Fore.CYAN}IP Address: {client_ip}")
-            click.echo(f"{Fore.CYAN}Public Key: {public_key}")
-            click.echo(f"{Fore.CYAN}Client config saved to: {config_file}")
+                    results['qr_codes']['wireguard'] = str(qr_file)
 
-            # Generate QR code
-            try:
-                qr_file = client_dir / f"{username}_{timestamp}_qr.png"
-                qr = qrcode.QRCode(
-                    version=None,  # Auto-size
-                    error_correction=qrcode.constants.ERROR_CORRECT_L,
-                    box_size=10,
-                    border=4,
-                )
-                qr.add_data(client_config)
-                qr.make(fit=True)
+                    click.echo(f"{Fore.GREEN}✓ WireGuard setup complete!")
+                    click.echo(f"{Fore.CYAN}  IP Address: {client_ip}")
+                    click.echo(f"{Fore.CYAN}  Config: {config_file}")
+                    click.echo(f"{Fore.CYAN}  QR Code: {qr_file}")
 
-                # Save as PNG
-                img = qr.make_image(fill_color="black", back_color="white")
-                img.save(str(qr_file))
+                except Exception as e:
+                    click.echo(f"{Fore.YELLOW}⚠ QR code generation failed: {e}")
 
-                click.echo(f"{Fore.CYAN}QR code saved to: {qr_file}")
+                results['protocols']['wireguard'] = {
+                    'ip': client_ip,
+                    'public_key': public_key,
+                    'private_key': private_key,
+                    'config_file': str(config_file)
+                }
 
-                # Display QR code in terminal
-                click.echo(f"\n{Fore.YELLOW}QR Code (scan with mobile device):")
-                qr_terminal = qrcode.QRCode()
-                qr_terminal.add_data(client_config)
-                qr_terminal.print_ascii(invert=True)
-                click.echo("")
+            # ========== Shadowsocks Setup ==========
+            if "shadowsocks" in protocols_list:
+                click.echo(f"\n{Fore.CYAN}{'='*60}")
+                click.echo(f"{Fore.YELLOW}Setting up Shadowsocks for '{username}'...")
 
-            except Exception as e:
-                click.echo(f"{Fore.YELLOW}⚠ QR code generation failed: {e}")
-                click.echo(f"{Fore.YELLOW}  Install qrcode: pip install qrcode pillow")
+                ss_password = self.generate_ss_password(username)
+                ss_port = 8388  # Base port, can be made unique per user if needed
+                ss_method = "chacha20-ietf-poly1305"
 
-            return {
-                'username': username,
-                'ip': client_ip,
-                'public_key': public_key,
-                'private_key': private_key,
-                'config_file': str(config_file)
-            }
+                # Add user to Shadowsocks
+                self.add_shadowsocks_user(ssh, username, ss_password, ss_port)
+
+                # Generate Shadowsocks URL
+                ss_url = self.create_ss_qr(ss_method, ss_password, server_ip, ss_port)
+
+                # Save Shadowsocks config
+                ss_config_content = f"""Shadowsocks Configuration
+Username: {username}
+Server: {server_ip}
+Port: {ss_port}
+Password: {ss_password}
+Method: {ss_method}
+
+Connection URL:
+{ss_url}
+
+Mobile App Setup:
+1. Install Shadowsocks client (iOS: Shadowrocket, Android: Shadowsocks)
+2. Scan QR code or manually enter details above
+3. Connect!
+"""
+                ss_config_file = client_dir / f"{username}_{timestamp}_shadowsocks.txt"
+                ss_config_file.write_text(ss_config_content)
+
+                # Generate QR code
+                try:
+                    qr_file = client_dir / f"{username}_{timestamp}_shadowsocks_qr.png"
+                    qr = qrcode.QRCode(
+                        version=None,
+                        error_correction=qrcode.constants.ERROR_CORRECT_L,
+                        box_size=10,
+                        border=4,
+                    )
+                    qr.add_data(ss_url)
+                    qr.make(fit=True)
+                    img = qr.make_image(fill_color="black", back_color="white")
+                    img.save(str(qr_file))
+
+                    results['qr_codes']['shadowsocks'] = str(qr_file)
+
+                    click.echo(f"{Fore.GREEN}✓ Shadowsocks setup complete!")
+                    click.echo(f"{Fore.CYAN}  Port: {ss_port}")
+                    click.echo(f"{Fore.CYAN}  Password: {ss_password}")
+                    click.echo(f"{Fore.CYAN}  Config: {ss_config_file}")
+                    click.echo(f"{Fore.CYAN}  QR Code: {qr_file}")
+
+                except Exception as e:
+                    click.echo(f"{Fore.YELLOW}⚠ QR code generation failed: {e}")
+
+                results['protocols']['shadowsocks'] = {
+                    'port': ss_port,
+                    'password': ss_password,
+                    'method': ss_method,
+                    'url': ss_url,
+                    'config_file': str(ss_config_file)
+                }
+
+            # ========== V2Ray Setup ==========
+            if "v2ray" in protocols_list:
+                click.echo(f"\n{Fore.CYAN}{'='*60}")
+                click.echo(f"{Fore.YELLOW}Setting up V2Ray for '{username}'...")
+
+                v2ray_uuid = self.generate_v2ray_uuid(username)
+                v2ray_port = 8443
+
+                # Add user to V2Ray
+                self.add_v2ray_user(ssh, username, v2ray_uuid)
+
+                # Generate V2Ray VMess URL
+                vmess_url = self.create_v2ray_qr(v2ray_uuid, server_ip, v2ray_port)
+
+                # Save V2Ray config
+                v2ray_config_content = f"""V2Ray VMess Configuration
+Username: {username}
+Server: {server_ip}
+Port: {v2ray_port}
+UUID: {v2ray_uuid}
+AlterID: 0
+Network: tcp
+Type: none
+
+Connection URL:
+{vmess_url}
+
+Mobile App Setup:
+1. Install V2Ray client (iOS: Shadowrocket/Kitsunebi, Android: v2rayNG)
+2. Scan QR code or manually enter details above
+3. Connect!
+"""
+                v2ray_config_file = client_dir / f"{username}_{timestamp}_v2ray.txt"
+                v2ray_config_file.write_text(v2ray_config_content)
+
+                # Generate QR code
+                try:
+                    qr_file = client_dir / f"{username}_{timestamp}_v2ray_qr.png"
+                    qr = qrcode.QRCode(
+                        version=None,
+                        error_correction=qrcode.constants.ERROR_CORRECT_L,
+                        box_size=10,
+                        border=4,
+                    )
+                    qr.add_data(vmess_url)
+                    qr.make(fit=True)
+                    img = qr.make_image(fill_color="black", back_color="white")
+                    img.save(str(qr_file))
+
+                    results['qr_codes']['v2ray'] = str(qr_file)
+
+                    click.echo(f"{Fore.GREEN}✓ V2Ray setup complete!")
+                    click.echo(f"{Fore.CYAN}  Port: {v2ray_port}")
+                    click.echo(f"{Fore.CYAN}  UUID: {v2ray_uuid}")
+                    click.echo(f"{Fore.CYAN}  Config: {v2ray_config_file}")
+                    click.echo(f"{Fore.CYAN}  QR Code: {qr_file}")
+
+                except Exception as e:
+                    click.echo(f"{Fore.YELLOW}⚠ QR code generation failed: {e}")
+
+                results['protocols']['v2ray'] = {
+                    'port': v2ray_port,
+                    'uuid': v2ray_uuid,
+                    'url': vmess_url,
+                    'config_file': str(v2ray_config_file)
+                }
+
+            click.echo(f"\n{Fore.CYAN}{'='*60}")
+            click.echo(f"{Fore.GREEN}✓ User '{username}' added to {len(protocols_list)} protocol(s)!")
+            click.echo(f"{Fore.CYAN}{'='*60}\n")
+
+            return results
 
     def remove_user(self, identifier):
         """Remove a user by username or IP"""
@@ -886,10 +1134,12 @@ def save_config(config):
 
 # CLI Commands
 @click.group()
-@click.version_option(version='2.0.0')
+@click.version_option(version='3.0.0')
 def cli():
     """
-    🦫 Capybara v2.0 - Censorship-Resistant VPN Infrastructure
+    🦫 Capybara v3.0 - Multi-Protocol Censorship-Resistant VPN
+
+    Supports WireGuard, Shadowsocks, and V2Ray with unified management.
 
     Advanced WireGuard VPN with DPI evasion for restricted networks.
 
@@ -940,22 +1190,65 @@ def user():
 @click.argument('username')
 @click.option('--description', '-d', default='', help='User description')
 def user_add(username, description):
-    """Add a new VPN user"""
+    """Add a new VPN user to all protocols (WireGuard, Shadowsocks, V2Ray)
+
+    Automatically generates configs and QR codes for all three protocols.
+
+    Examples:
+        ./capybara.py user add alice
+        ./capybara.py user add bob --description "Bob from Sales"
+    """
     config = load_config()
     manager = VPNManager(config)
 
     try:
         result = manager.add_user(username, description)
-        click.echo(f"\n{Fore.CYAN}{'='*60}")
-        click.echo(f"{Fore.GREEN}Client Configuration File Created")
-        click.echo(f"{Fore.CYAN}{'='*60}")
-        click.echo(f"\nShare this file with the user: {result['config_file']}")
-        click.echo(f"\n{Fore.YELLOW}Client Setup Instructions:")
-        click.echo("1. Run udp2raw client: ./udp2raw -c -l 127.0.0.1:4096 -r 66.42.119.38:443 -k SecureVPN2025Obfuscate --raw-mode faketcp --cipher-mode xor --auth-mode hmac_sha1 -a --fix-gro")
-        click.echo(f"2. Import {result['config_file']} into WireGuard app")
-        click.echo("3. Connect!")
+
+        # Display summary
+        click.echo(f"\n{Fore.GREEN}{'='*60}")
+        click.echo(f"{Fore.GREEN}User '{username}' Successfully Added to All Protocols!")
+        click.echo(f"{Fore.GREEN}{'='*60}\n")
+
+        # Show protocol-specific info
+        if 'wireguard' in result['protocols']:
+            wg = result['protocols']['wireguard']
+            click.echo(f"{Fore.CYAN}WireGuard:")
+            click.echo(f"  Config: {wg['config_file']}")
+            if 'wireguard' in result['qr_codes']:
+                click.echo(f"  QR Code: {result['qr_codes']['wireguard']}")
+            click.echo(f"\n  {Fore.YELLOW}Setup Instructions:")
+            click.echo(f"  1. Run udp2raw: ./udp2raw -c -l 127.0.0.1:4096 -r {config['server']['host']}:443 -k SecureVPN2025Obfuscate --raw-mode faketcp --cipher-mode xor --auth-mode hmac_sha1 -a --fix-gro")
+            click.echo(f"  2. Import {wg['config_file']} into WireGuard app")
+            click.echo(f"  3. Connect!\n")
+
+        if 'shadowsocks' in result['protocols']:
+            ss = result['protocols']['shadowsocks']
+            click.echo(f"{Fore.CYAN}Shadowsocks:")
+            click.echo(f"  Config: {ss['config_file']}")
+            if 'shadowsocks' in result['qr_codes']:
+                click.echo(f"  QR Code: {result['qr_codes']['shadowsocks']}")
+            click.echo(f"\n  {Fore.YELLOW}Setup Instructions:")
+            click.echo(f"  1. Install Shadowsocks client (iOS: Shadowrocket, Android: Shadowsocks)")
+            click.echo(f"  2. Scan QR code or add server manually")
+            click.echo(f"  3. Connect!\n")
+
+        if 'v2ray' in result['protocols']:
+            v2 = result['protocols']['v2ray']
+            click.echo(f"{Fore.CYAN}V2Ray:")
+            click.echo(f"  Config: {v2['config_file']}")
+            if 'v2ray' in result['qr_codes']:
+                click.echo(f"  QR Code: {result['qr_codes']['v2ray']}")
+            click.echo(f"\n  {Fore.YELLOW}Setup Instructions:")
+            click.echo(f"  1. Install V2Ray client (iOS: Shadowrocket/Kitsunebi, Android: v2rayNG)")
+            click.echo(f"  2. Scan QR code or add VMess server manually")
+            click.echo(f"  3. Connect!\n")
+
+        click.echo(f"{Fore.CYAN}All configuration files saved to: ./vpn_clients/")
+
     except Exception as e:
         click.echo(f"{Fore.RED}Error adding user: {e}")
+        import traceback
+        traceback.print_exc()
         sys.exit(1)
 
 

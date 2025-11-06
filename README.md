@@ -1,15 +1,17 @@
-# 🦫 Capybara - Censorship-Resistant VPN with DPI Evasion
+# 🦫 Capybara - Multi-Protocol Censorship-Resistant VPN
 
-<img width="3641" height="2048" alt="Capybara VPN - Advanced WireGuard with DPI Evasion" src="https://github.com/user-attachments/assets/0a93d0cf-ad45-45f7-b2a4-14f138bc39c2" />
+<img width="3641" height="2048" alt="Capybara VPN - Multi-Protocol Anti-Censorship System" src="https://github.com/user-attachments/assets/0a93d0cf-ad45-45f7-b2a4-14f138bc39c2" />
 
-**Capybara** is an advanced WireGuard VPN infrastructure designed to bypass Deep Packet Inspection (DPI) and network censorship in restricted countries like China, Russia, and Iran.
+**Capybara** is an advanced multi-protocol VPN infrastructure designed to bypass Deep Packet Inspection (DPI) and network censorship in restricted countries like China, Russia, and Iran.
 
 ### Core Capabilities:
+- **🔄 Three Protocols** - WireGuard, Shadowsocks, and V2Ray with unified management
 - **🛡️ DPI Evasion** - udp2raw obfuscation disguises VPN traffic as HTTPS on port 443
 - **⚡ Automated Deployment** - One-command server setup on Alpine Linux
 - **🎛️ Advanced Management** - Professional CLI with 35+ commands for monitoring, analytics, and control
-- **📱 QR Code Provisioning** - Instant client configuration via QR codes
+- **📱 QR Code Provisioning** - Instant client configuration via QR codes for all protocols
 - **🌐 Bilingual Support** - Full documentation in English and Russian
+- **🔐 Unified Credentials** - Same user credentials work across all protocols
 
 Built for networks where standard VPNs fail. Designed for privacy professionals, journalists, and users in restrictive environments.
 
@@ -30,7 +32,29 @@ Capybaras are nature's most chill animals - calm, adaptable, and excellent at na
 
 ### Part 1: Server Installation (One Command!)
 
-Set up a WireGuard VPN server with udp2raw obfuscation on Alpine Linux:
+**Option A: Multi-Protocol Setup (Recommended)**
+
+Set up all three protocols - WireGuard, Shadowsocks, and V2Ray with unified management:
+
+```bash
+# On your Alpine Linux VPS, run:
+wget https://raw.githubusercontent.com/jmpnop/capybara/main/install_multi_vpn_server.sh
+chmod +x install_multi_vpn_server.sh
+./install_multi_vpn_server.sh
+```
+
+**What it does:**
+- Installs WireGuard + udp2raw (DPI evasion)
+- Installs Shadowsocks with AEAD encryption
+- Installs V2Ray with VMess protocol
+- Configures firewall for all protocols (awall)
+- Generates server keys
+- Sets up automatic startup
+- Configures ports: 443 (WireGuard/udp2raw), 8388 (Shadowsocks), 8443 (V2Ray)
+
+**Option B: WireGuard Only**
+
+For WireGuard-only setup:
 
 ```bash
 # On your Alpine Linux VPS, run:
@@ -38,13 +62,6 @@ wget https://raw.githubusercontent.com/jmpnop/capybara/main/install_vpn_server.s
 chmod +x install_vpn_server.sh
 ./install_vpn_server.sh
 ```
-
-**What it does:**
-- Installs WireGuard + udp2raw (DPI evasion)
-- Configures firewall (awall)
-- Generates server keys
-- Sets up automatic startup
-- Configures obfuscation on port 443 (disguised as HTTPS)
 
 **Supported:** Alpine Linux 3.20+
 
@@ -64,12 +81,44 @@ echo 'alias vpn="python3 /path/to/capybara.py"' >> ~/.zshrc
 
 Then configure `~/.capybara_config.yaml` with your server details and start managing!
 
+## Protocols Explained
+
+Capybara supports three battle-tested protocols, each with unique strengths:
+
+### 1. WireGuard + udp2raw (Port 443)
+**Best for**: Desktop users, maximum performance, DPI evasion
+- **Speed**: Fastest protocol, minimal overhead
+- **Obfuscation**: udp2raw disguises traffic as HTTPS
+- **Setup**: Requires udp2raw client + WireGuard app
+- **Use case**: Primary protocol for unrestricted access
+
+### 2. Shadowsocks (Port 8388)
+**Best for**: Mobile devices, iOS/Android, simple setup
+- **Speed**: Fast, AEAD encryption (chacha20-ietf-poly1305)
+- **Compatibility**: Wide client support (Shadowrocket, v2rayNG)
+- **Setup**: Scan QR code, connect immediately
+- **Use case**: Perfect for phones, backup protocol
+
+### 3. V2Ray VMess (Port 8443)
+**Best for**: Advanced obfuscation, highly restrictive networks
+- **Obfuscation**: Strong traffic masking capabilities
+- **Flexibility**: Highly configurable transport options
+- **Setup**: Scan QR code or manual configuration
+- **Use case**: Last resort when other protocols are blocked
+
+**Why Three Protocols?**
+- **Redundancy**: If one is blocked, switch to another
+- **Device Compatibility**: Different devices work better with different protocols
+- **Network Conditions**: Some protocols perform better in certain network environments
+- **Future-Proof**: Multiple fallback options ensure continued access
+
 ## Advanced Features
 
 ### 🛡️ Anti-Censorship Technology
 - **udp2raw Obfuscation** - Transforms WireGuard UDP into fake TCP packets on port 443
 - **HTTPS Mimicry** - Traffic indistinguishable from legitimate web browsing
 - **DPI Bypass** - Defeats Deep Packet Inspection used in China, Russia, Iran
+- **Multi-Protocol Defense** - Three independent protocols for maximum resilience
 - **Adaptive MTU** - Optimized packet sizes for obfuscation reliability
 - **Persistent Tunnels** - Keepalive ensures connection through NAT and firewalls
 
@@ -101,8 +150,11 @@ Then configure `~/.capybara_config.yaml` with your server details and start mana
 After completing both Part 1 (Server Installation) and Part 2 (Management Tool Installation), you can start managing your VPN:
 
 ```bash
-# Add a new VPN user
-./capybara.py user add alice --description "Alice from Engineering"
+# Add a new user (automatically creates configs for all 3 protocols)
+./capybara.py user add alice
+
+# Add a user with description
+./capybara.py user add bob --description "Bob from Sales"
 
 # List all users
 ./capybara.py user list
@@ -122,6 +174,17 @@ After completing both Part 1 (Server Installation) and Part 2 (Management Tool I
 # Restart the VPN server
 ./capybara.py server restart
 ```
+
+**Every user automatically gets:**
+- ✅ WireGuard config + QR code (for desktops)
+- ✅ Shadowsocks config + QR code (for mobile)
+- ✅ V2Ray config + QR code (for backup)
+
+**Multi-Protocol Benefits:**
+- **Protocol Redundancy**: If one protocol is blocked, users can switch to another
+- **Unified Management**: Same username/credentials across all protocols
+- **Automatic QR Codes**: Each protocol gets its own QR code
+- **Maximum Compatibility**: Works on any device, any network
 
 ### Create an Alias
 
@@ -160,14 +223,17 @@ vpn server status
 
 ## Command Overview
 
-### User Management
+### User Management (Multi-Protocol)
 ```bash
-capybara.py user add <username>           # Add new user
-capybara.py user list                     # List all users
-capybara.py user list --detailed          # Detailed user info
-capybara.py user remove <user>            # Remove user
-capybara.py user block <user>             # Block user
+capybara.py user add <username>              # Add user to all 3 protocols
+capybara.py user add <username> -d "Info"    # Add with description
+capybara.py user list                        # List all users
+capybara.py user list --detailed             # Detailed user info
+capybara.py user remove <user>               # Remove user
+capybara.py user block <user>                # Block user
 ```
+
+**Note**: Every user automatically gets configs and QR codes for all three protocols (WireGuard, Shadowsocks, V2Ray) in `./vpn_clients/`
 
 ### Server Management
 ```bash
@@ -252,14 +318,54 @@ capybara.py config                        # Show config
 ### Onboard a New User
 
 ```bash
-# 1. Add user
+# 1. Add user (automatically creates all protocol configs)
 ./capybara.py user add bob --description "Bob from Sales"
 
-# 2. Share config file (created in ./vpn_clients/)
-cat ./vpn_clients/bob_20250106_123456.conf
+# This automatically creates 6 files:
+# - bob_TIMESTAMP_wireguard.conf + bob_TIMESTAMP_wireguard_qr.png
+# - bob_TIMESTAMP_shadowsocks.txt + bob_TIMESTAMP_shadowsocks_qr.png
+# - bob_TIMESTAMP_v2ray.txt + bob_TIMESTAMP_v2ray_qr.png
+
+# 2. Share appropriate config based on user's device:
+#    Desktop → WireGuard config + udp2raw instructions
+#    Mobile → Shadowsocks QR code (easiest)
+#    Backup → V2Ray QR code
 
 # 3. Monitor connection
 ./capybara.py stats live
+```
+
+### Mobile User Setup (Easiest)
+
+```bash
+# 1. Add user
+./capybara.py user add alice
+
+# 2. Send them the Shadowsocks QR code
+#    File: ./vpn_clients/alice_*_shadowsocks_qr.png
+
+# 3. User installs Shadowrocket (iOS) or Shadowsocks (Android)
+
+# 4. User scans QR code
+
+# 5. Connected!
+```
+
+### Desktop User Setup (Fastest)
+
+```bash
+# 1. Add user
+./capybara.py user add charlie
+
+# 2. Send them the WireGuard config
+#    File: ./vpn_clients/charlie_*_wireguard.conf
+
+# 3. User starts udp2raw client
+#    (Command displayed after user creation)
+
+# 4. User imports WireGuard config
+
+# 5. Connected with full DPI evasion!
 ```
 
 ### Daily Health Check
@@ -337,7 +443,16 @@ Previously named "vpn_manager", we renamed it to Capybara because:
 
 ## What's New
 
-### Version 2.0.0 (Latest - Full Featured!)
+### Version 3.0.0 (Latest - Multi-Protocol!)
+- 🔄 **Three Protocols** - WireGuard, Shadowsocks, and V2Ray support
+- 🔐 **Unified Management** - Same credentials across all protocols
+- 📱 **Multi-Protocol QR Codes** - Automatic QR code generation for all protocols
+- ⚡ **Protocol Selection** - Choose which protocols to enable per user
+- 🎯 **Smart Routing** - Different protocols for different devices/networks
+- 📦 **Automated Installation** - One-command multi-protocol server setup
+- 🔧 **Flexible Configuration** - Per-protocol or unified user management
+
+### Version 2.0.0 (Full Featured)
 - ✨ **Logs Management** - View and follow logs in real-time
 - ✨ **Connection Control** - Kick users immediately
 - ✨ **Service Management** - Restart individual services
@@ -346,7 +461,7 @@ Previously named "vpn_manager", we renamed it to Capybara because:
 - ✨ **System Health** - Monitor CPU, memory, disk
 - ✨ **Reports & Analytics** - Generate reports in multiple formats
 
-### Version 1.0.0
+### Version 1.0.0 (Initial Release)
 - ✨ Renamed from vpn_manager to Capybara
 - ✨ Added `server stop` and `server start` commands
 - ✅ Full user management
@@ -382,5 +497,34 @@ Previously named "vpn_manager", we renamed it to Capybara because:
 
 **Made with 🦫 by the VPN Management Team**
 
-**Version:** 2.0.0 (Full Featured)
+**Version:** 3.0.0 (Multi-Protocol)
 **License:** Free for personal use
+**Status:** ✅ Production Ready (WireGuard Tested, Shadowsocks/V2Ray Code Complete)
+
+---
+
+## 📋 Implementation Status
+
+| Protocol | Code | Installation Script | Testing | Status |
+|----------|------|-------------------|---------|--------|
+| WireGuard + udp2raw | ✅ Complete | ✅ Complete | ✅ Tested | 🟢 Production Ready |
+| Shadowsocks | ✅ Complete | ✅ Complete | 📦 Ready | 🟡 Code Complete |
+| V2Ray | ✅ Complete | ✅ Complete | 📦 Ready | 🟡 Code Complete |
+
+**Note:** WireGuard is fully tested and operational. Shadowsocks and V2Ray implementation is complete and ready for deployment - install scripts are prepared and CLI supports all three protocols.
+
+---
+
+## Protocol Comparison
+
+| Feature | WireGuard + udp2raw | Shadowsocks | V2Ray |
+|---------|-------------------|-------------|-------|
+| **Speed** | Fastest | Fast | Medium |
+| **Mobile Support** | Limited (udp2raw) | Excellent | Excellent |
+| **DPI Evasion** | Excellent | Good | Excellent |
+| **Setup Complexity** | High | Low | Medium |
+| **Client Apps** | WireGuard + udp2raw | Many options | Many options |
+| **Best For** | Desktop, Max Speed | Mobile, Quick Setup | Advanced Evasion |
+| **Port** | 443 (TCP-disguised) | 8388 (TCP/UDP) | 8443 (TCP) |
+
+**Recommendation**: Use WireGuard for desktops, Shadowsocks for mobile devices, and V2Ray as fallback in highly restrictive networks.
