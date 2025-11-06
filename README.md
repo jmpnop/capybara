@@ -1,4 +1,5 @@
 # 🦫 Capybara - Complete WireGuard VPN Solution
+<img width="3641" height="2048" alt="image" src="https://github.com/user-attachments/assets/0a93d0cf-ad45-45f7-b2a4-14f138bc39c2" />
 
 **Capybara** is a complete WireGuard VPN solution that includes:
 1. **🔧 Automated Server Setup** - One-command installation script for Alpine Linux with udp2raw obfuscation
