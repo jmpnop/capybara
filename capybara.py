@@ -9,6 +9,7 @@ import json
 import yaml
 import paramiko
 import click
+import qrcode
 from pathlib import Path
 from datetime import datetime
 from tabulate import tabulate
@@ -200,6 +201,35 @@ PersistentKeepalive = 25
             click.echo(f"{Fore.CYAN}IP Address: {client_ip}")
             click.echo(f"{Fore.CYAN}Public Key: {public_key}")
             click.echo(f"{Fore.CYAN}Client config saved to: {config_file}")
+
+            # Generate QR code
+            try:
+                qr_file = client_dir / f"{username}_{timestamp}_qr.png"
+                qr = qrcode.QRCode(
+                    version=None,  # Auto-size
+                    error_correction=qrcode.constants.ERROR_CORRECT_L,
+                    box_size=10,
+                    border=4,
+                )
+                qr.add_data(client_config)
+                qr.make(fit=True)
+
+                # Save as PNG
+                img = qr.make_image(fill_color="black", back_color="white")
+                img.save(str(qr_file))
+
+                click.echo(f"{Fore.CYAN}QR code saved to: {qr_file}")
+
+                # Display QR code in terminal
+                click.echo(f"\n{Fore.YELLOW}QR Code (scan with mobile device):")
+                qr_terminal = qrcode.QRCode()
+                qr_terminal.add_data(client_config)
+                qr_terminal.print_ascii(invert=True)
+                click.echo("")
+
+            except Exception as e:
+                click.echo(f"{Fore.YELLOW}⚠ QR code generation failed: {e}")
+                click.echo(f"{Fore.YELLOW}  Install qrcode: pip install qrcode pillow")
 
             return {
                 'username': username,
