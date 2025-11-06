@@ -1,15 +1,30 @@
-# 🦫 Capybara - Complete WireGuard VPN Solution
-<img width="3641" height="2048" alt="image" src="https://github.com/user-attachments/assets/0a93d0cf-ad45-45f7-b2a4-14f138bc39c2" />
+# 🦫 Capybara - Censorship-Resistant VPN with DPI Evasion
 
-**Capybara** is a complete WireGuard VPN solution that includes:
-1. **🔧 Automated Server Setup** - One-command installation script for Alpine Linux with udp2raw obfuscation
-2. **💻 Management CLI Tool** - Comprehensive Python-based command-line tool for managing your VPN server via SSH
+<img width="3641" height="2048" alt="Capybara VPN - Advanced WireGuard with DPI Evasion" src="https://github.com/user-attachments/assets/0a93d0cf-ad45-45f7-b2a4-14f138bc39c2" />
 
-Deploy a censorship-resistant VPN server with DPI evasion and manage it effortlessly. It's like having a friendly capybara 🦫 helping you set up and manage your entire VPN infrastructure!
+**Capybara** is an advanced WireGuard VPN infrastructure designed to bypass Deep Packet Inspection (DPI) and network censorship in restricted countries like China, Russia, and Iran.
 
-## Why Capybara?
+### Core Capabilities:
+- **🛡️ DPI Evasion** - udp2raw obfuscation disguises VPN traffic as HTTPS on port 443
+- **⚡ Automated Deployment** - One-command server setup on Alpine Linux
+- **🎛️ Advanced Management** - Professional CLI with 35+ commands for monitoring, analytics, and control
+- **📱 QR Code Provisioning** - Instant client configuration via QR codes
+- **🌐 Bilingual Support** - Full documentation in English and Russian
 
-Capybaras are known for being calm, social, and excellent at managing their environments - just like this tool helps you calmly set up and efficiently manage your VPN server and users!
+Built for networks where standard VPNs fail. Designed for privacy professionals, journalists, and users in restrictive environments.
+
+## Why Choose Capybara?
+
+### Technical Advantages
+- **Port 443 Obfuscation** - Traffic appears as legitimate HTTPS, undetectable by DPI systems
+- **Fake TCP Packets** - udp2raw transforms UDP WireGuard into TCP-like traffic
+- **Enterprise Monitoring** - Real-time statistics, health checks, connection tracking, and analytics
+- **Zero-Downtime Operations** - Restart individual services without affecting users
+- **Disaster Recovery** - Automated backups with one-command restoration
+- **Professional Diagnostics** - Network testing, handshake verification, and detailed logging
+
+### Why "Capybara"?
+Capybaras are nature's most chill animals - calm, adaptable, and excellent at navigating complex environments. Just like this VPN system helps you navigate internet censorship with ease.
 
 ## 🚀 Quick Start
 
@@ -49,24 +64,37 @@ echo 'alias vpn="python3 /path/to/capybara.py"' >> ~/.zshrc
 
 Then configure `~/.capybara_config.yaml` with your server details and start managing!
 
-## Features
+## Advanced Features
 
-### Core Features
-- 🧑‍💼 **User Management** - Add, remove, list, and block VPN users with a single command
-- 📊 **Statistics & Monitoring** - Real-time and static statistics viewing
-- 🚫 **Resource Blocking** - Block specific domains and IP addresses
-- ⚙️ **Server Management** - Start, stop, restart, and check status of your VPN server
-- 📁 **Auto Config Generation** - Automatically creates client configuration files
-- 🎨 **Beautiful CLI** - Color-coded output with tables and progress indicators
+### 🛡️ Anti-Censorship Technology
+- **udp2raw Obfuscation** - Transforms WireGuard UDP into fake TCP packets on port 443
+- **HTTPS Mimicry** - Traffic indistinguishable from legitimate web browsing
+- **DPI Bypass** - Defeats Deep Packet Inspection used in China, Russia, Iran
+- **Adaptive MTU** - Optimized packet sizes for obfuscation reliability
+- **Persistent Tunnels** - Keepalive ensures connection through NAT and firewalls
 
-### Advanced Features (NEW!)
-- 📝 **Logs Management** - View and follow server logs in real-time
-- 🔌 **Connection Control** - Disconnect users immediately for security
-- 🔧 **Service Management** - Restart individual services (WireGuard, udp2raw, firewall)
-- 💾 **Backup & Restore** - Complete backup and disaster recovery system
-- 🔍 **Network Diagnostics** - Ping users, check ports, verify handshakes
-- 🏥 **System Health** - Monitor CPU, memory, disk, and network
-- 📈 **Reports & Analytics** - Generate usage reports in text, JSON, or CSV
+### 📊 Enterprise Management
+- **Real-Time Monitoring** - Live statistics dashboard with auto-refresh
+- **Connection Analytics** - Track data transfer, handshakes, and session duration
+- **Multi-Format Reports** - Generate usage reports in text, JSON, or CSV formats
+- **Health Monitoring** - CPU, memory, disk, and network metrics
+- **Service Orchestration** - Granular control over WireGuard, udp2raw, and firewall
+- **Emergency Controls** - Instantly disconnect users or trigger emergency shutdown
+
+### 🔧 Professional Operations
+- **Zero-Downtime Updates** - Restart individual services without disconnecting users
+- **Automated Backups** - One-command backup of all configurations and keys
+- **Disaster Recovery** - Complete restoration from backup archives
+- **Detailed Logging** - Service-specific logs with filtering and real-time tail
+- **Network Diagnostics** - Built-in ping, port scanning, and handshake verification
+- **QR Code Provisioning** - Automatic generation for instant mobile device setup
+
+### 🧑‍💼 User Management
+- **Instant Provisioning** - Add users with automatic key generation and IP assignment
+- **Flexible Access Control** - Block/unblock users without server restart
+- **Connection Tracking** - Monitor active connections with endpoint information
+- **Domain/IP Blocking** - Filter specific resources at VPN level
+- **Detailed User Views** - See handshake status, data transfer, and last seen time
 
 ## Basic Usage
 

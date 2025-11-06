@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 """
-Capybara - WireGuard VPN Management Utility
-Manage remote WireGuard VPN server via SSH
+Capybara - Censorship-Resistant VPN Infrastructure
+Advanced WireGuard VPN management with DPI evasion and obfuscation
+
+Features: udp2raw obfuscation, enterprise monitoring, QR provisioning,
+automated backups, real-time analytics, and professional diagnostics.
 """
 
 import sys
@@ -886,25 +889,35 @@ def save_config(config):
 @click.version_option(version='2.0.0')
 def cli():
     """
-    🦫 Capybara v2.0 - WireGuard VPN Management Tool
+    🦫 Capybara v2.0 - Censorship-Resistant VPN Infrastructure
 
-    Comprehensive VPN server management via SSH with advanced features:
-    • User management (add, remove, list, block)
-    • Connection control (kick users, view active connections)
-    • Service management (restart individual services)
-    • Backup & restore (disaster recovery)
-    • Network diagnostics (ping, ports, handshake)
-    • System health monitoring (CPU, memory, disk)
-    • Reports & analytics (text, JSON, CSV)
-    • Logs management (view and follow logs)
+    Advanced WireGuard VPN with DPI evasion for restricted networks.
+
+    🛡️  Anti-Censorship:
+      • udp2raw obfuscation (disguises VPN as HTTPS traffic)
+      • Port 443 operation (bypasses DPI in China, Russia, Iran)
+      • Fake TCP packets (defeats protocol fingerprinting)
+
+    🎛️  Enterprise Management:
+      • Real-time monitoring & analytics
+      • QR code provisioning for mobile
+      • Zero-downtime service restarts
+      • Automated backup & disaster recovery
+      • Multi-format reports (text/JSON/CSV)
+
+    🔧 Professional Operations:
+      • Connection control (instant kick)
+      • Network diagnostics (ping, ports, handshake)
+      • System health monitoring
+      • Detailed logging with filtering
 
     Quick Start:
-      capybara.py user add alice              Add new user
-      capybara.py server status               Check server
-      capybara.py logs show                   View logs
-      capybara.py backup create               Create backup
+      capybara.py user add alice              Add user (auto QR code)
+      capybara.py connection list             View active connections
+      capybara.py health check                System health
+      capybara.py logs show --service udp2raw View obfuscation logs
 
-    Documentation: https://github.com/your-repo/capybara
+    Documentation: https://github.com/jmpnop/capybara
     """
     pass
 

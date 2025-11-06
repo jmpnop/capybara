@@ -1,16 +1,19 @@
 #!/bin/sh
 #
-# Capybara VPN Server Installation Script
-# Automated setup of WireGuard + udp2raw obfuscation on Alpine Linux
+# Capybara - Censorship-Resistant VPN Server Installation
+# Automated deployment of WireGuard with udp2raw DPI evasion on Alpine Linux
+#
+# Features:
+#   • Port 443 HTTPS obfuscation (bypasses DPI in China, Russia, Iran)
+#   • Fake TCP packet transformation (defeats protocol fingerprinting)
+#   • Alpine Linux hardened firewall (awall)
+#   • Automatic startup configuration
+#   • Complete in ~2 minutes
 #
 # Usage:
-#   1. Upload to Alpine Linux server: scp install_vpn_server.sh root@YOUR_SERVER_IP:/root/
-#   2. SSH into server: ssh root@YOUR_SERVER_IP
-#   3. Make executable: chmod +x /root/install_vpn_server.sh
-#   4. Run: /root/install_vpn_server.sh
-#
-# Or run remotely:
-#   ssh root@YOUR_SERVER_IP 'bash -s' < install_vpn_server.sh
+#   wget https://raw.githubusercontent.com/jmpnop/capybara/main/install_vpn_server.sh
+#   chmod +x install_vpn_server.sh
+#   ./install_vpn_server.sh
 #
 
 set -e  # Exit on error
@@ -263,14 +266,20 @@ log_success "WireGuard started"
 # Display status
 echo ""
 echo "${CYAN}========================================${NC}"
-echo "${GREEN}  Capybara VPN Server Installation Complete!${NC}"
+echo "${GREEN}  🛡️  Censorship-Resistant VPN Server Ready!${NC}"
 echo "${CYAN}========================================${NC}"
 echo ""
-echo "${YELLOW}Server Information:${NC}"
+echo "${YELLOW}🔐 Anti-Censorship Features Enabled:${NC}"
+echo "  ✓ Port 443 HTTPS Obfuscation (DPI Bypass)"
+echo "  ✓ Fake TCP Packet Transformation"
+echo "  ✓ Protocol Fingerprint Evasion"
+echo "  ✓ Firewall Hardening (awall)"
+echo ""
+echo "${YELLOW}📡 Network Configuration:${NC}"
 echo "  VPN Network: ${VPN_NETWORK}"
 echo "  Server VPN IP: ${VPN_SERVER_IP}"
-echo "  WireGuard Port: ${WG_PORT} (UDP, direct)"
-echo "  Obfuscated Port: ${UDP2RAW_PORT} (TCP, disguised as HTTPS)"
+echo "  Obfuscated Port: ${UDP2RAW_PORT} (appears as HTTPS)"
+echo "  WireGuard Port: ${WG_PORT} (internal, UDP)"
 echo "  Public Interface: ${PUBLIC_INTERFACE}"
 echo ""
 echo "${YELLOW}Server Keys:${NC}"
