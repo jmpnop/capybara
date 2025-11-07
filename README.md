@@ -16,13 +16,33 @@ Built for networks where standard VPNs fail. Designed for privacy professionals,
 
 ## Why Choose Capybara?
 
-### Technical Advantages
-- **Port 443 Obfuscation** - Traffic appears as legitimate HTTPS, undetectable by DPI systems
-- **Fake TCP Packets** - udp2raw transforms UDP WireGuard into TCP-like traffic
-- **Enterprise Monitoring** - Real-time statistics, health checks, connection tracking, and analytics
-- **Zero-Downtime Operations** - Restart individual services without affecting users
+### Multi-Protocol Architecture
+Unlike single-protocol VPNs, Capybara gives you three censorship-resistant options:
+
+**🔹 WireGuard + udp2raw (Port 443)**
+- Modern VPN with cryptokey routing and high performance
+- udp2raw obfuscation disguises VPN as HTTPS traffic
+- Fake TCP packets bypass DPI that blocks UDP
+- Best for: Laptops, desktops, maximum performance
+
+**🔹 Shadowsocks (Port 8388)**
+- Lightweight SOCKS5 proxy with AEAD encryption
+- TCP+UDP support for flexibility
+- Simple and reliable, hard to detect
+- Best for: General browsing, streaming, apps
+
+**🔹 V2Ray VMess + WebSocket (Port 80)**
+- Disguised as normal HTTP web traffic
+- WebSocket path mimics API calls (/api/v2/download)
+- Works on restrictive mobile networks (Beeline, MTS, Megafon)
+- Best for: Mobile devices, heavily censored networks
+
+### Management Advantages
+- **Unified Control** - Manage all 3 protocols from one CLI
+- **Enterprise Monitoring** - Real-time statistics, health checks, connection tracking
+- **Zero-Downtime Operations** - Restart individual protocols without affecting others
 - **Disaster Recovery** - Automated backups with one-command restoration
-- **Professional Diagnostics** - Network testing, handshake verification, and detailed logging
+- **Professional Diagnostics** - Network testing, port checks, detailed logging for all protocols
 
 ### Why "Capybara"?
 Capybaras are nature's most chill animals - calm, adaptable, and excellent at navigating complex environments. Just like this VPN system helps you navigate internet censorship with ease.
