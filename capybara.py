@@ -257,7 +257,9 @@ class VPNManager:
             # Always use all three protocols
             protocols_list = ["wireguard", "shadowsocks", "v2ray"]
 
+            # Timestamp for server-side tracking only (not used in client filenames)
             timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+
             client_dir = Path.cwd() / 'vpn_clients'
             client_dir.mkdir(exist_ok=True)
 
@@ -321,12 +323,12 @@ PersistentKeepalive = 25
 """
 
                 # Save client config
-                config_file = client_dir / f"{username}_{timestamp}_wireguard.conf"
+                config_file = client_dir / f"{username}_wireguard.conf"
                 config_file.write_text(client_config)
 
                 # Generate QR code
                 try:
-                    qr_file = client_dir / f"{username}_{timestamp}_wireguard_qr.png"
+                    qr_file = client_dir / f"{username}_wireguard_qr.png"
                     qr = qrcode.QRCode(
                         version=None,
                         error_correction=qrcode.constants.ERROR_CORRECT_L,
@@ -387,12 +389,12 @@ Mobile App Setup:
 2. Scan QR code or manually enter details above
 3. Connect!
 """
-                ss_config_file = client_dir / f"{username}_{timestamp}_shadowsocks.txt"
+                ss_config_file = client_dir / f"{username}_shadowsocks.txt"
                 ss_config_file.write_text(ss_config_content)
 
                 # Generate QR code
                 try:
-                    qr_file = client_dir / f"{username}_{timestamp}_shadowsocks_qr.png"
+                    qr_file = client_dir / f"{username}_shadowsocks_qr.png"
                     qr = qrcode.QRCode(
                         version=None,
                         error_correction=qrcode.constants.ERROR_CORRECT_L,
@@ -458,12 +460,12 @@ Mobile App Setup:
 
 Note: Uses WebSocket on port 80 for mobile network compatibility
 """
-                v2ray_config_file = client_dir / f"{username}_{timestamp}_v2ray.txt"
+                v2ray_config_file = client_dir / f"{username}_v2ray.txt"
                 v2ray_config_file.write_text(v2ray_config_content)
 
                 # Generate QR code
                 try:
-                    qr_file = client_dir / f"{username}_{timestamp}_v2ray_qr.png"
+                    qr_file = client_dir / f"{username}_v2ray_qr.png"
                     qr = qrcode.QRCode(
                         version=None,
                         error_correction=qrcode.constants.ERROR_CORRECT_L,
