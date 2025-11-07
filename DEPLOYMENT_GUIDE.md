@@ -69,8 +69,8 @@ pip3 install -r requirements.txt
 1. **Deploy WireGuard now** (Option 1)
 2. **Later, add Shadowsocks + V2Ray:**
    ```bash
-   scp install_shadowsocks_v2ray_only.sh root@YOUR_SERVER:/root/
-   ssh root@YOUR_SERVER
+   scp install_shadowsocks_v2ray_only.sh root@YOUR_SERVER_IP:/root/
+   ssh root@YOUR_SERVER_IP_IP
    ./install_shadowsocks_v2ray_only.sh
    ```
 
@@ -182,7 +182,7 @@ pip3 install -r requirements.txt
 
 ```bash
 # SSH to your Alpine Linux VPS
-ssh root@YOUR_SERVER_IP
+ssh root@YOUR_SERVER_IP_IP_IP
 
 # Download installation script
 wget https://raw.githubusercontent.com/jmpnop/capybara/main/install_vpn_server.sh
@@ -307,14 +307,14 @@ When you're ready to add the additional protocols:
 
 ```bash
 # From your local machine
-scp install_shadowsocks_v2ray_only.sh root@YOUR_SERVER:/root/
+scp install_shadowsocks_v2ray_only.sh root@YOUR_SERVER_IP:/root/
 ```
 
 ### Run Installation
 
 ```bash
 # SSH to server
-ssh root@YOUR_SERVER
+ssh root@YOUR_SERVER_IP_IP
 
 # Make executable
 chmod +x /root/install_shadowsocks_v2ray_only.sh
@@ -348,7 +348,7 @@ chmod +x /root/install_shadowsocks_v2ray_only.sh
 
 ```bash
 # Check all services are running
-ssh root@YOUR_SERVER "rc-service shadowsocks status && rc-service v2ray status"
+ssh root@YOUR_SERVER_IP_IP "rc-service shadowsocks status && rc-service v2ray status"
 
 # Check ports are listening
 ./capybara.py diag ports

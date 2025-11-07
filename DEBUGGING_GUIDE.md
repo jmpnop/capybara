@@ -90,17 +90,17 @@ Press `Ctrl+C` to stop following logs.
 
 **Check WireGuard Interface:**
 ```bash
-ssh root@YOUR_SERVER "wg show"
+ssh root@YOUR_SERVER_IP "wg show"
 ```
 
 **Check WireGuard Service:**
 ```bash
-ssh root@YOUR_SERVER "rc-service wg-quick status"
+ssh root@YOUR_SERVER_IP "rc-service wg-quick status"
 ```
 
 **View WireGuard Config:**
 ```bash
-ssh root@YOUR_SERVER "cat /etc/wireguard/wg0.conf"
+ssh root@YOUR_SERVER_IP "cat /etc/wireguard/wg0.conf"
 ```
 
 **Common Issues:**
@@ -126,22 +126,22 @@ ssh root@YOUR_SERVER "cat /etc/wireguard/wg0.conf"
 
 **Check Shadowsocks Service:**
 ```bash
-ssh root@YOUR_SERVER "rc-service shadowsocks-rust status"
+ssh root@YOUR_SERVER_IP "rc-service shadowsocks-rust status"
 ```
 
 **View Shadowsocks Config:**
 ```bash
-ssh root@YOUR_SERVER "cat /etc/shadowsocks-rust/config.json"
+ssh root@YOUR_SERVER_IP "cat /etc/shadowsocks-rust/config.json"
 ```
 
 **Test Shadowsocks Server:**
 ```bash
-ssh root@YOUR_SERVER "ss-server --version"
+ssh root@YOUR_SERVER_IP "ss-server --version"
 ```
 
 **Check Active Connections:**
 ```bash
-ssh root@YOUR_SERVER "netstat -tulpn | grep :8388"
+ssh root@YOUR_SERVER_IP "netstat -tulpn | grep :8388"
 ```
 
 **Common Issues:**
@@ -176,22 +176,22 @@ ssh root@SERVER "grep shadowsocks /var/log/messages"
 
 **Check V2Ray Service:**
 ```bash
-ssh root@YOUR_SERVER "rc-service v2ray status"
+ssh root@YOUR_SERVER_IP "rc-service v2ray status"
 ```
 
 **View V2Ray Config:**
 ```bash
-ssh root@YOUR_SERVER "cat /etc/v2ray/config.json"
+ssh root@YOUR_SERVER_IP "cat /etc/v2ray/config.json"
 ```
 
 **Test V2Ray Binary:**
 ```bash
-ssh root@YOUR_SERVER "v2ray version"
+ssh root@YOUR_SERVER_IP "v2ray version"
 ```
 
 **Check Active Connections:**
 ```bash
-ssh root@YOUR_SERVER "netstat -tulpn | grep :8443"
+ssh root@YOUR_SERVER_IP "netstat -tulpn | grep :8443"
 ```
 
 **View Both V2Ray Logs:**

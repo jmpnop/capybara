@@ -270,10 +270,10 @@ pip3 install -r requirements.txt
 If you want to add the new protocols to your existing server:
 ```bash
 # Upload addon script
-scp install_shadowsocks_v2ray_only.sh root@YOUR_SERVER:/root/
+scp install_shadowsocks_v2ray_only.sh root@YOUR_SERVER_IP:/root/
 
 # SSH to server and run
-ssh root@YOUR_SERVER
+ssh root@YOUR_SERVER_IP
 chmod +x /root/install_shadowsocks_v2ray_only.sh
 ./install_shadowsocks_v2ray_only.sh
 ```

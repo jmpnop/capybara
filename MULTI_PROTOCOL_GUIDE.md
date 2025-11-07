@@ -52,8 +52,8 @@ If you already have WireGuard installed:
 
 ```bash
 # Upload the supplemental installation script
-scp install_shadowsocks_v2ray_only.sh root@YOUR_SERVER:/root/
-ssh root@YOUR_SERVER
+scp install_shadowsocks_v2ray_only.sh root@YOUR_SERVER_IP:/root/
+ssh root@YOUR_SERVER_IP
 chmod +x /root/install_shadowsocks_v2ray_only.sh
 ./install_shadowsocks_v2ray_only.sh
 ```
@@ -139,7 +139,7 @@ This means:
 
 1. Start udp2raw client:
 ```bash
-./udp2raw -c -l 127.0.0.1:4096 -r YOUR_SERVER:443 \
+./udp2raw -c -l 127.0.0.1:4096 -r YOUR_SERVER_IP:443 \
   -k YOUR_UDP2RAW_PASSWORD --raw-mode faketcp \
   --cipher-mode xor --auth-mode hmac_sha1 -a --fix-gro
 ```

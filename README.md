@@ -418,10 +418,10 @@ This is the most common issue! Symptoms:
 **Fix:**
 ```bash
 # 1. Test if server can resolve DNS
-ssh root@YOUR_SERVER "nslookup google.com"
+ssh root@YOUR_SERVER_IP "nslookup google.com"
 
 # If DNS fails, fix the firewall:
-ssh root@YOUR_SERVER << 'EOF'
+ssh root@YOUR_SERVER_IP << 'EOF'
 # Update firewall to allow outbound traffic
 cat > /etc/awall/optional/multi-vpn.json << 'EOFCONFIG'
 {
@@ -453,7 +453,7 @@ EOF
 Check which service is failing:
 ```bash
 # Check all services
-ssh root@YOUR_SERVER << 'EOF'
+ssh root@YOUR_SERVER_IP << 'EOF'
 rc-service shadowsocks-rust status
 rc-service v2ray status
 netstat -tulpn | grep -E '8388|8443'
