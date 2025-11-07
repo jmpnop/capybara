@@ -18,6 +18,7 @@ import uuid
 import hashlib
 from pathlib import Path
 from datetime import datetime
+from PIL import Image, ImageDraw, ImageFont
 from tabulate import tabulate
 from colorama import Fore, Style, init
 
@@ -194,6 +195,113 @@ class VPNManager:
         encoded = base64.b64encode(json_str.encode()).decode()
         return f"vmess://{encoded}"
 
+    def generate_qr_with_overlay(self, data, username, output_path):
+        """Generate QR code with username overlay on capybara background"""
+        try:
+            # Generate base QR code
+            qr = qrcode.QRCode(
+                version=None,
+                error_correction=qrcode.constants.ERROR_CORRECT_H,  # High error correction
+                box_size=10,
+                border=2,
+            )
+            qr.add_data(data)
+            qr.make(fit=True)
+
+            # Create QR code image at fixed size
+            qr_img = qr.make_image(fill_color="black", back_color="white")
+            qr_fixed_size = 700
+            qr_img = qr_img.resize((qr_fixed_size, qr_fixed_size), Image.Resampling.LANCZOS)
+
+            # Define padding
+            desired_padding = 50
+
+            # Load capybara background
+            capy_path = Path(__file__).parent / 'capy.png'
+            if capy_path.exists():
+                background = Image.open(capy_path)
+
+                # Get original aspect ratio
+                original_aspect = background.width / background.height
+
+                # Calculate required background size
+                required_width = qr_fixed_size + (2 * desired_padding)
+                required_height = int(required_width / original_aspect)
+
+                # Ensure enough height for QR code
+                min_height = qr_fixed_size + (2 * desired_padding)
+                if required_height < min_height:
+                    required_height = min_height
+                    required_width = int(required_height * original_aspect)
+
+                # Resize background
+                background = background.resize((required_width, required_height), Image.Resampling.LANCZOS)
+                result = background.copy()
+            else:
+                # No background - create white canvas
+                required_width = qr_fixed_size + (2 * desired_padding)
+                required_height = required_width
+                result = Image.new('RGB', (required_width, required_height), 'white')
+
+            # Paste QR code
+            x_pos = desired_padding
+            y_pos = desired_padding
+            result.paste(qr_img, (x_pos, y_pos))
+
+            # Add username text overlay
+            draw = ImageDraw.Draw(result)
+            font_size = 60
+            font_loaded = False
+
+            # Try different font paths
+            font_paths = [
+                "/System/Library/Fonts/Courier.ttc",
+                "/System/Library/Fonts/Monaco.dfont",
+                "/Library/Fonts/Courier New.ttf",
+                "/System/Library/Fonts/Supplemental/Courier New.ttf",
+                "/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf",
+            ]
+
+            for font_path in font_paths:
+                try:
+                    font = ImageFont.truetype(font_path, font_size)
+                    font_loaded = True
+                    break
+                except:
+                    continue
+
+            if not font_loaded:
+                font = ImageFont.load_default()
+
+            # Center text
+            bbox = draw.textbbox((0, 0), username, font=font)
+            text_width = bbox[2] - bbox[0]
+            text_height = bbox[3] - bbox[1]
+            text_x = (result.width - text_width) // 2
+            text_y = (result.height - text_height) // 2
+
+            # Draw text
+            draw.text((text_x, text_y), username, fill="black", font=font)
+
+            # Save result
+            result.save(str(output_path))
+            return True
+
+        except Exception as e:
+            click.echo(f"{Fore.YELLOW}⚠ QR overlay failed: {e}, using standard QR")
+            # Fallback to standard QR code
+            qr = qrcode.QRCode(
+                version=None,
+                error_correction=qrcode.constants.ERROR_CORRECT_L,
+                box_size=10,
+                border=4,
+            )
+            qr.add_data(data)
+            qr.make(fit=True)
+            img = qr.make_image(fill_color="black", back_color="white")
+            img.save(str(output_path))
+            return False
+
     def add_shadowsocks_user(self, ssh, username, password, port=8388):
         """Add user to Shadowsocks
 
@@ -245,6 +353,64 @@ class VPNManager:
 
         # Restart V2Ray
         ssh.execute("rc-service v2ray restart", check_error=False)
+
+    def remove_v2ray_user(self, ssh, username):
+        """Remove user from V2Ray"""
+        # Read current V2Ray config
+        output, _, _ = ssh.execute("cat /etc/v2ray/config.json")
+        v2ray_config = json.loads(output)
+
+        # Remove user from clients
+        if "inbounds" in v2ray_config and len(v2ray_config["inbounds"]) > 0:
+            if "settings" in v2ray_config["inbounds"][0] and "clients" in v2ray_config["inbounds"][0]["settings"]:
+                clients = v2ray_config["inbounds"][0]["settings"]["clients"]
+
+                # Filter out the user
+                original_count = len(clients)
+                v2ray_config["inbounds"][0]["settings"]["clients"] = [
+                    client for client in clients
+                    if client.get("email") != f"{username}@capybara"
+                ]
+
+                new_count = len(v2ray_config["inbounds"][0]["settings"]["clients"])
+
+                if original_count == new_count:
+                    return False  # User not found
+
+                # Write updated config
+                config_json = json.dumps(v2ray_config, indent=2)
+                ssh.execute(f"cat > /etc/v2ray/config.json << 'EOFV2'\n{config_json}\nEOFV2")
+
+                # Restart V2Ray
+                ssh.execute("rc-service v2ray restart", check_error=False)
+                return True
+
+        return False
+
+    def list_v2ray_users(self, ssh):
+        """List all V2Ray users"""
+        try:
+            # Read V2Ray config
+            output, _, _ = ssh.execute("cat /etc/v2ray/config.json")
+            v2ray_config = json.loads(output)
+
+            users = []
+            if "inbounds" in v2ray_config and len(v2ray_config["inbounds"]) > 0:
+                if "settings" in v2ray_config["inbounds"][0] and "clients" in v2ray_config["inbounds"][0]["settings"]:
+                    for client in v2ray_config["inbounds"][0]["settings"]["clients"]:
+                        username = client.get("email", "").replace("@capybara", "")
+                        users.append({
+                            'username': username,
+                            'uuid': client.get("id", "N/A"),
+                            'alterId': client.get("alterId", 0),
+                            'email': client.get("email", "N/A"),
+                            'protocol': 'v2ray'
+                        })
+
+            return users
+        except Exception as e:
+            click.echo(f"{Fore.YELLOW}⚠ Could not list V2Ray users: {e}")
+            return []
 
     def add_user(self, username, description=""):
         """Add a new VPN user to all protocols (WireGuard, Shadowsocks, V2Ray)
@@ -326,20 +492,10 @@ PersistentKeepalive = 25
                 config_file = client_dir / f"{username}_wireguard.conf"
                 config_file.write_text(client_config)
 
-                # Generate QR code
+                # Generate QR code with username overlay
                 try:
                     qr_file = client_dir / f"{username}_wireguard_qr.png"
-                    qr = qrcode.QRCode(
-                        version=None,
-                        error_correction=qrcode.constants.ERROR_CORRECT_L,
-                        box_size=10,
-                        border=4,
-                    )
-                    qr.add_data(client_config)
-                    qr.make(fit=True)
-                    img = qr.make_image(fill_color="black", back_color="white")
-                    img.save(str(qr_file))
-
+                    self.generate_qr_with_overlay(client_config, username, qr_file)
                     results['qr_codes']['wireguard'] = str(qr_file)
 
                     click.echo(f"{Fore.GREEN}✓ WireGuard setup complete!")
@@ -392,20 +548,10 @@ Mobile App Setup:
                 ss_config_file = client_dir / f"{username}_shadowsocks.txt"
                 ss_config_file.write_text(ss_config_content)
 
-                # Generate QR code
+                # Generate QR code with username overlay
                 try:
                     qr_file = client_dir / f"{username}_shadowsocks_qr.png"
-                    qr = qrcode.QRCode(
-                        version=None,
-                        error_correction=qrcode.constants.ERROR_CORRECT_L,
-                        box_size=10,
-                        border=4,
-                    )
-                    qr.add_data(ss_url)
-                    qr.make(fit=True)
-                    img = qr.make_image(fill_color="black", back_color="white")
-                    img.save(str(qr_file))
-
+                    self.generate_qr_with_overlay(ss_url, username, qr_file)
                     results['qr_codes']['shadowsocks'] = str(qr_file)
 
                     click.echo(f"{Fore.GREEN}✓ Shadowsocks setup complete!")
@@ -463,20 +609,10 @@ Note: Uses WebSocket on port 80 for mobile network compatibility
                 v2ray_config_file = client_dir / f"{username}_v2ray.txt"
                 v2ray_config_file.write_text(v2ray_config_content)
 
-                # Generate QR code
+                # Generate QR code with username overlay
                 try:
                     qr_file = client_dir / f"{username}_v2ray_qr.png"
-                    qr = qrcode.QRCode(
-                        version=None,
-                        error_correction=qrcode.constants.ERROR_CORRECT_L,
-                        box_size=10,
-                        border=4,
-                    )
-                    qr.add_data(vmess_url)
-                    qr.make(fit=True)
-                    img = qr.make_image(fill_color="black", back_color="white")
-                    img.save(str(qr_file))
-
+                    self.generate_qr_with_overlay(vmess_url, username, qr_file)
                     results['qr_codes']['v2ray'] = str(qr_file)
 
                     click.echo(f"{Fore.GREEN}✓ V2Ray setup complete!")
@@ -502,8 +638,14 @@ Note: Uses WebSocket on port 80 for mobile network compatibility
             return results
 
     def remove_user(self, identifier):
-        """Remove a user by username or IP"""
+        """Remove a user by username or IP from all protocols (WireGuard and V2Ray)
+
+        Note: Shadowsocks uses a shared password model and does not support per-user removal.
+        """
         with SSHConnection(self.config) as ssh:
+            removed_from = []
+
+            # ========== Remove from WireGuard ==========
             # Find the user's peer section
             cmd = f"cat {self.config['vpn']['config_path']}"
             config_content, _, _ = ssh.execute(cmd)
@@ -512,7 +654,7 @@ Note: Uses WebSocket on port 80 for mobile network compatibility
             lines = config_content.split('\n')
             peer_start = None
             peer_end = None
-            found = False
+            found_wg = False
 
             for i, line in enumerate(lines):
                 if f"User: {identifier}" in line or f"IP: {identifier}" in line:
@@ -528,33 +670,54 @@ Note: Uses WebSocket on port 80 for mobile network compatibility
                             break
                     if peer_end is None:
                         peer_end = len(lines)
-                    found = True
+                    found_wg = True
                     break
 
-            if not found:
-                click.echo(f"{Fore.RED}User '{identifier}' not found")
+            if found_wg:
+                # Remove the peer section
+                new_config = '\n'.join(lines[:peer_start] + lines[peer_end:])
+
+                # Backup current config
+                timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+                ssh.execute(f"cp {self.config['vpn']['config_path']} {self.config['vpn']['config_path']}.backup_{timestamp}")
+
+                # Write new config
+                cmd = f"cat > {self.config['vpn']['config_path']} << 'EOFCONFIG'\n{new_config}\nEOFCONFIG"
+                ssh.execute(cmd)
+
+                # Reload WireGuard
+                ssh.execute(f"wg syncconf {self.config['vpn']['interface']} <(wg-quick strip {self.config['vpn']['interface']})")
+
+                removed_from.append('WireGuard')
+
+            # ========== Remove from V2Ray ==========
+            v2ray_removed = self.remove_v2ray_user(ssh, identifier)
+            if v2ray_removed:
+                removed_from.append('V2Ray')
+
+            # ========== Report Results ==========
+            if removed_from:
+                protocols_str = ' and '.join(removed_from)
+                click.echo(f"{Fore.GREEN}✓ User '{identifier}' removed from: {protocols_str}")
+                if 'WireGuard' not in removed_from:
+                    click.echo(f"{Fore.YELLOW}  Note: User not found in WireGuard")
+                if 'V2Ray' not in removed_from:
+                    click.echo(f"{Fore.YELLOW}  Note: User not found in V2Ray")
+                click.echo(f"{Fore.CYAN}  Note: Shadowsocks uses shared credentials - no per-user removal available")
+                return True
+            else:
+                click.echo(f"{Fore.RED}User '{identifier}' not found in any protocol")
                 return False
 
-            # Remove the peer section
-            new_config = '\n'.join(lines[:peer_start] + lines[peer_end:])
-
-            # Backup current config
-            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-            ssh.execute(f"cp {self.config['vpn']['config_path']} {self.config['vpn']['config_path']}.backup_{timestamp}")
-
-            # Write new config
-            cmd = f"cat > {self.config['vpn']['config_path']} << 'EOFCONFIG'\n{new_config}\nEOFCONFIG"
-            ssh.execute(cmd)
-
-            # Reload WireGuard
-            ssh.execute(f"wg syncconf {self.config['vpn']['interface']} <(wg-quick strip {self.config['vpn']['interface']})")
-
-            click.echo(f"{Fore.GREEN}✓ User '{identifier}' removed successfully")
-            return True
-
     def list_users(self):
-        """List all VPN users"""
+        """List all VPN users from all protocols (WireGuard and V2Ray)
+
+        Note: Shadowsocks uses shared credentials and does not support per-user listing.
+        """
         with SSHConnection(self.config) as ssh:
+            all_users = []
+
+            # ========== WireGuard Users ==========
             # Get WireGuard status
             wg_output, _, _ = ssh.execute(f"wg show {self.config['vpn']['interface']}")
 
@@ -562,7 +725,7 @@ Note: Uses WebSocket on port 80 for mobile network compatibility
             config_output, _, _ = ssh.execute(f"cat {self.config['vpn']['config_path']}")
 
             # Parse users from config
-            users = []
+            wg_users = []
             lines = config_output.split('\n')
 
             current_user = {}
@@ -576,7 +739,8 @@ Note: Uses WebSocket on port 80 for mobile network compatibility
                         'ip': parts[1].replace('IP:', '').strip() if len(parts) > 1 else 'N/A',
                         'created': parts[2].replace('Created:', '').strip() if len(parts) > 2 else 'N/A',
                         'description': '',
-                        'status': 'Active'
+                        'status': 'Active',
+                        'protocol': 'wireguard'
                     }
                 elif line.startswith('# Description:') and current_user:
                     current_user['description'] = line.replace('# Description:', '').strip()
@@ -584,7 +748,7 @@ Note: Uses WebSocket on port 80 for mobile network compatibility
                     current_user['public_key'] = line.replace('PublicKey =', '').strip()
                 elif line.startswith('AllowedIPs =') and current_user:
                     current_user['allowed_ips'] = line.replace('AllowedIPs =', '').strip()
-                    users.append(current_user.copy())
+                    wg_users.append(current_user.copy())
                     current_user = {}
 
             # Enrich with connection data from wg show
@@ -598,8 +762,8 @@ Note: Uses WebSocket on port 80 for mobile network compatibility
                     key, value = line.split(':', 1)
                     peer_data[current_peer][key.strip()] = value.strip()
 
-            # Add connection info
-            for user in users:
+            # Add connection info to WireGuard users
+            for user in wg_users:
                 if 'public_key' in user and user['public_key'] in peer_data:
                     data = peer_data[user['public_key']]
                     user['endpoint'] = data.get('endpoint', 'Never connected')
@@ -612,7 +776,24 @@ Note: Uses WebSocket on port 80 for mobile network compatibility
                     user['transfer_rx'] = '0 B'
                     user['transfer_tx'] = '0 B'
 
-            return users
+            all_users.extend(wg_users)
+
+            # ========== V2Ray Users ==========
+            v2ray_users = self.list_v2ray_users(ssh)
+            # Add default fields for consistency with WireGuard users
+            for user in v2ray_users:
+                user['ip'] = 'N/A (proxy)'
+                user['created'] = 'N/A'
+                user['description'] = ''
+                user['status'] = 'Active'
+                user['endpoint'] = 'N/A (no connection tracking)'
+                user['last_handshake'] = 'N/A'
+                user['transfer_rx'] = 'N/A'
+                user['transfer_tx'] = 'N/A'
+
+            all_users.extend(v2ray_users)
+
+            return all_users
 
     def get_stats(self):
         """Get VPN server statistics"""
@@ -940,6 +1121,10 @@ Note: Uses WebSocket on port 80 for mobile network compatibility
                 # Start it again (from wg config PreUp)
                 ssh.execute(f"wg-quick down {self.config['vpn']['interface']}")
                 ssh.execute(f"wg-quick up {self.config['vpn']['interface']}")
+            elif service == 'shadowsocks':
+                ssh.execute("rc-service shadowsocks-rust restart")
+            elif service == 'v2ray':
+                ssh.execute("rc-service v2ray restart")
             elif service == 'firewall':
                 ssh.execute("rc-service iptables restart")
             else:
@@ -959,6 +1144,14 @@ Note: Uses WebSocket on port 80 for mobile network compatibility
             # udp2raw status
             output, _, code = ssh.execute("ps aux | grep '[u]dp2raw'", check_error=False)
             status['udp2raw'] = 'running' if code == 0 and output else 'stopped'
+
+            # Shadowsocks status
+            output, _, code = ssh.execute("rc-service shadowsocks-rust status", check_error=False)
+            status['shadowsocks'] = 'running' if code == 0 else 'stopped'
+
+            # V2Ray status
+            output, _, code = ssh.execute("rc-service v2ray status", check_error=False)
+            status['v2ray'] = 'running' if code == 0 else 'stopped'
 
             # Firewall status
             output, _, code = ssh.execute("rc-service iptables status", check_error=False)
@@ -985,6 +1178,12 @@ Note: Uses WebSocket on port 80 for mobile network compatibility
             # Backup keys
             ssh.execute(f"cp -r /etc/wireguard/*.key {backup_dir}/ 2>/dev/null || true")
             ssh.execute(f"cp -r /etc/wireguard/clients {backup_dir}/ 2>/dev/null || true")
+
+            # Backup Shadowsocks config
+            ssh.execute(f"cp /etc/shadowsocks-rust/config.json {backup_dir}/shadowsocks-config.json 2>/dev/null || true")
+
+            # Backup V2Ray config
+            ssh.execute(f"cp /etc/v2ray/config.json {backup_dir}/v2ray-config.json 2>/dev/null || true")
 
             # Backup iptables rules
             ssh.execute(f"iptables-save > {backup_dir}/iptables.rules")
@@ -1044,6 +1243,8 @@ Note: Uses WebSocket on port 80 for mobile network compatibility
 
             # Stop services
             ssh.execute(f"wg-quick down {self.config['vpn']['interface']} || true")
+            ssh.execute("rc-service shadowsocks-rust stop || true", check_error=False)
+            ssh.execute("rc-service v2ray stop || true", check_error=False)
 
             # Extract backup
             ssh.execute(f"cd /root/vpn_backups && tar -xzf {backup_name}.tar.gz")
@@ -1055,6 +1256,12 @@ Note: Uses WebSocket on port 80 for mobile network compatibility
             ssh.execute(f"cp /root/vpn_backups/{backup_name}/*.key /etc/wireguard/ 2>/dev/null || true")
             ssh.execute(f"cp -r /root/vpn_backups/{backup_name}/clients /etc/wireguard/ 2>/dev/null || true")
 
+            # Restore Shadowsocks config
+            ssh.execute(f"cp /root/vpn_backups/{backup_name}/shadowsocks-config.json /etc/shadowsocks-rust/config.json 2>/dev/null || true")
+
+            # Restore V2Ray config
+            ssh.execute(f"cp /root/vpn_backups/{backup_name}/v2ray-config.json /etc/v2ray/config.json 2>/dev/null || true")
+
             # Restore iptables
             ssh.execute(f"iptables-restore < /root/vpn_backups/{backup_name}/iptables.rules 2>/dev/null || true")
 
@@ -1063,6 +1270,8 @@ Note: Uses WebSocket on port 80 for mobile network compatibility
 
             # Restart services
             ssh.execute(f"wg-quick up {self.config['vpn']['interface']}")
+            ssh.execute("rc-service shadowsocks-rust start || true", check_error=False)
+            ssh.execute("rc-service v2ray start || true", check_error=False)
 
             click.echo(f"{Fore.GREEN}✓ Backup restored successfully")
 
@@ -1343,13 +1552,23 @@ def user_list(detailed):
 
         if detailed:
             for user in users:
+                protocol = user.get('protocol', 'unknown')
                 click.echo(f"\n{Fore.CYAN}{'='*60}")
-                click.echo(f"{Fore.GREEN}User: {user.get('username', 'N/A')}")
+                click.echo(f"{Fore.GREEN}User: {user.get('username', 'N/A')} ({protocol.upper()})")
                 click.echo(f"{Fore.CYAN}{'='*60}")
+                click.echo(f"Protocol:        {protocol.upper()}")
                 click.echo(f"IP Address:      {user.get('ip', 'N/A')}")
                 click.echo(f"Created:         {user.get('created', 'N/A')}")
                 click.echo(f"Description:     {user.get('description', 'N/A')}")
-                click.echo(f"Public Key:      {user.get('public_key', 'N/A')[:40]}...")
+
+                # Protocol-specific details
+                if protocol == 'wireguard':
+                    pubkey = user.get('public_key', 'N/A')
+                    click.echo(f"Public Key:      {pubkey[:40]}..." if len(pubkey) > 40 else f"Public Key:      {pubkey}")
+                elif protocol == 'v2ray':
+                    click.echo(f"UUID:            {user.get('uuid', 'N/A')}")
+                    click.echo(f"AlterID:         {user.get('alterId', 'N/A')}")
+
                 click.echo(f"Endpoint:        {user.get('endpoint', 'Never connected')}")
                 click.echo(f"Last Handshake:  {user.get('last_handshake', 'Never')}")
                 click.echo(f"Data RX:         {user.get('transfer_rx', '0 B')}")
@@ -1359,17 +1578,24 @@ def user_list(detailed):
             for user in users:
                 table_data.append([
                     user.get('username', 'N/A'),
-                    user.get('ip', 'N/A'),
-                    user.get('endpoint', 'Never')[:25],
-                    user.get('last_handshake', 'Never')[:20],
-                    user.get('transfer_rx', '0 B'),
-                    user.get('transfer_tx', '0 B')
+                    user.get('protocol', 'N/A').upper(),
+                    user.get('ip', 'N/A')[:15],
+                    user.get('endpoint', 'Never')[:22],
+                    user.get('last_handshake', 'Never')[:18],
+                    user.get('transfer_rx', '0 B')[:10],
+                    user.get('transfer_tx', '0 B')[:10]
                 ])
 
-            headers = ['Username', 'IP Address', 'Endpoint', 'Last Handshake', 'RX', 'TX']
-            click.echo(f"\n{Fore.CYAN}VPN Users:")
+            headers = ['Username', 'Protocol', 'IP', 'Endpoint', 'Handshake', 'RX', 'TX']
+            click.echo(f"\n{Fore.CYAN}VPN Users (All Protocols):")
             click.echo(tabulate(table_data, headers=headers, tablefmt='grid'))
             click.echo(f"\n{Fore.GREEN}Total users: {len(users)}")
+
+            # Show protocol breakdown
+            wg_count = sum(1 for u in users if u.get('protocol') == 'wireguard')
+            v2_count = sum(1 for u in users if u.get('protocol') == 'v2ray')
+            click.echo(f"{Fore.CYAN}  WireGuard: {wg_count} | V2Ray: {v2_count}")
+            click.echo(f"{Fore.YELLOW}  Note: Shadowsocks uses shared credentials (no per-user listing)")
 
     except Exception as e:
         click.echo(f"{Fore.RED}Error listing users: {e}")
@@ -1573,6 +1799,7 @@ def server_status():
 
     try:
         stats_data = manager.get_stats()
+        service_status = manager.service_status()
 
         click.echo(f"\n{Fore.CYAN}{'='*60}")
         click.echo(f"{Fore.GREEN}VPN Server Status")
@@ -1580,13 +1807,21 @@ def server_status():
 
         wg_running = 'interface:' in stats_data.get('wg_status', '')
         udp_running = stats_data.get('udp2raw_running', False)
+        ss_running = service_status.get('shadowsocks') == 'running'
+        v2ray_running = service_status.get('v2ray') == 'running'
 
-        status_color = Fore.GREEN if (wg_running and udp_running) else Fore.RED
-        status_text = "RUNNING" if (wg_running and udp_running) else "ERROR"
+        # Overall status: all critical services must be running
+        all_running = wg_running and udp_running and ss_running and v2ray_running
+        status_color = Fore.GREEN if all_running else Fore.YELLOW
+        status_text = "RUNNING" if all_running else "PARTIAL"
 
         click.echo(f"Overall Status:      {status_color}{status_text}")
+        click.echo(f"\n{Fore.CYAN}Protocol Status:")
         click.echo(f"{Fore.YELLOW}WireGuard:           {Fore.GREEN + 'Running' if wg_running else Fore.RED + 'Stopped'}")
         click.echo(f"{Fore.YELLOW}udp2raw:             {Fore.GREEN + 'Running' if udp_running else Fore.RED + 'Stopped'}")
+        click.echo(f"{Fore.YELLOW}Shadowsocks:         {Fore.GREEN + 'Running' if ss_running else Fore.RED + 'Stopped'}")
+        click.echo(f"{Fore.YELLOW}V2Ray:               {Fore.GREEN + 'Running' if v2ray_running else Fore.RED + 'Stopped'}")
+        click.echo(f"\n{Fore.CYAN}Server Information:")
         click.echo(f"{Fore.YELLOW}Server:              {config['server']['host']}")
         click.echo(f"{Fore.YELLOW}Interface:           {config['vpn']['interface']}")
         click.echo(f"{Fore.YELLOW}Uptime:              {stats_data.get('uptime', 'N/A')}")
@@ -1785,11 +2020,13 @@ def connection_kick_all():
 @cli.group()
 def service():
     """
-    Manage individual services (WireGuard, udp2raw, firewall).
+    Manage individual services (all protocols).
 
     Examples:
       capybara.py service status                  # Check all services
       capybara.py service restart wireguard       # Restart WireGuard only
+      capybara.py service restart shadowsocks     # Restart Shadowsocks only
+      capybara.py service restart v2ray           # Restart V2Ray only
       capybara.py service restart udp2raw         # Restart udp2raw only
       capybara.py service restart firewall        # Restart firewall only
     """
@@ -1819,7 +2056,7 @@ def service_status_cmd():
 
 
 @service.command('restart')
-@click.argument('service_name', type=click.Choice(['wireguard', 'udp2raw', 'firewall']))
+@click.argument('service_name', type=click.Choice(['wireguard', 'udp2raw', 'shadowsocks', 'v2ray', 'firewall']))
 @click.confirmation_option(prompt='Are you sure you want to restart this service?')
 def service_restart_cmd(service_name):
     """Restart a specific service"""
