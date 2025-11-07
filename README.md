@@ -487,9 +487,13 @@ Edit with: `nano ~/.capybara_config.yaml`
 
 ## Requirements
 
+**For VPN Server:**
+- Alpine Linux 3.20+ VPS (cloud server)
+- Root SSH access
+
+**For Management Tool (Local Machine):**
 - Python 3.7+
-- SSH access to VPN server
-- WireGuard VPN server already configured
+- SSH access to your VPN server
 
 ## File Locations
 
