@@ -72,7 +72,7 @@ Before setting up a client, you need:
    - Server IP: Your VPN server's public IP
    - WireGuard (obfuscated): Port `443` (TCP, disguised as HTTPS)
    - Shadowsocks: Port `8388` (TCP/UDP)
-   - V2Ray: Port `8443` (TCP)
+   - V2Ray: Port `80` (WebSocket)
    - VPN network: `10.7.0.0/24`
 
 ---
@@ -560,7 +560,7 @@ Your admin provided:
 V2Ray VMess Configuration
 Username: alice
 Server: YOUR_SERVER_IP
-Port: 8443
+Port: 80
 UUID: 20411e00-3571-5874-a809-609bc91618ec
 AlterID: 0
 Network: tcp
@@ -590,7 +590,7 @@ If QR code doesn't work:
 3. Select **Type: VMess**
 4. Enter details from `.txt` file:
    - **Address:** Server IP
-   - **Port:** 8443
+   - **Port:** 80
    - **UUID:** From your config
    - **AlterID:** 0
    - **Security:** auto
@@ -632,7 +632,7 @@ If QR code doesn't work:
 4. Enter details:
    - **Remarks:** alice (your username)
    - **Address:** Server IP
-   - **Port:** 8443
+   - **Port:** 80
    - **UUID:** From config
    - **AlterID:** 0
    - **Security:** auto
@@ -663,7 +663,7 @@ brew install v2ray
 4. Select **VMess**
 5. Enter details from your `.txt` file:
    - **Address:** Server IP
-   - **Port:** 8443
+   - **Port:** 80
    - **UUID:** From config
    - **AlterID:** 0
    - **Security:** auto
@@ -687,7 +687,7 @@ cat > ~/v2ray-config.json << 'EOF'
     "settings": {
       "vnext": [{
         "address": "YOUR_SERVER_IP",
-        "port": 8443,
+        "port": 80,
         "users": [{"id": "YOUR_UUID", "alterId": 0}]
       }]
     }
@@ -858,7 +858,7 @@ Ensure SOCKS Proxy is enabled: 127.0.0.1:1080
 **Solution:**
 1. Copy UUID exactly from config file (no spaces)
 2. Verify AlterID is set to `0`
-3. Check server address and port (8443)
+3. Check server address and port (80)
 4. Ensure Network type is `tcp`
 5. Security should be `auto` or `aes-128-gcm`
 
@@ -1073,7 +1073,7 @@ sudo tcpdump -i any port 8388 -n
 **V2Ray:**
 ```bash
 # Monitor VMess traffic
-sudo tcpdump -i any port 8443 -n
+sudo tcpdump -i any port 80 -n
 # Should show encrypted TCP streams
 ```
 
@@ -1321,7 +1321,7 @@ Current protocol failing?
    # Can you reach specific ports?
    nc -zv YOUR_SERVER_IP 443    # WireGuard
    nc -zv YOUR_SERVER_IP 8388   # Shadowsocks
-   nc -zv YOUR_SERVER_IP 8443   # V2Ray
+   nc -zv YOUR_SERVER_IP 80   # V2Ray
    ```
 
 4. **Regenerate all configurations (last resort):**
@@ -1364,7 +1364,7 @@ Current protocol failing?
 **Scenario: Corporate network blocks your VPN**
 1. Try WireGuard+udp2raw (looks like HTTPS)
 2. If blocked, try Shadowsocks on port 8388
-3. If blocked, try V2Ray on port 8443
+3. If blocked, try V2Ray on port 80
 4. If all blocked, network has deep inspection - may need different server IP
 
 ---
@@ -1453,7 +1453,7 @@ TROUBLESHOOTING:
 PORTS:
 - WireGuard: 443 (via udp2raw)
 - Shadowsocks: 8388
-- V2Ray: 8443
+- V2Ray: 80
 ```
 
 ---

@@ -11,7 +11,7 @@ Complete step-by-step guide for setting up a multi-protocol VPN server on Alpine
 ## Protocols Installed
 1. **WireGuard + udp2raw** - Port 443 (UDP disguised as TCP, HTTPS obfuscation)
 2. **Shadowsocks** - Port 8388 (TCP/UDP, AEAD encryption)
-3. **V2Ray VMess** - Port 8443 (TCP, highly configurable)
+3. **V2Ray VMess + WebSocket** - Port 80 (HTTP/WebSocket, mobile-optimized)
 
 ## Prerequisites
 - Alpine Linux VPS with root access
@@ -216,14 +216,16 @@ cat > /etc/v2ray/config.json << 'EOF'
   },
   "inbounds": [
     {
-      "port": 8443,
+      "port": 80,
       "protocol": "vmess",
       "settings": {
         "clients": []
       },
       "streamSettings": {
-        "network": "tcp",
-        "security": "none"
+        "network": "ws",
+        "wsSettings": {
+          "path": "/api/v2/download"
+        }
       }
     }
   ],
@@ -236,6 +238,12 @@ cat > /etc/v2ray/config.json << 'EOF'
 }
 EOF
 ```
+
+**Configuration Details**:
+- **Port 80**: Standard HTTP port - rarely blocked by ISPs or mobile networks
+- **WebSocket Transport**: Makes traffic look like normal web application traffic
+- **Path `/api/v2/download`**: Disguises VPN traffic as API requests
+- **Mobile-Optimized**: Works reliably on Beeline, MTS, Megafon mobile networks where standard ports are often blocked
 
 **Note**: Users will be added to the `clients` array using the Capybara management tool.
 
@@ -270,7 +278,7 @@ cat > /etc/awall/private/custom-services.json << 'EOF'
             { "proto": "udp", "port": 8388 }
         ],
         "v2ray": [
-            { "proto": "tcp", "port": 8443 }
+            { "proto": "tcp", "port": 80 }
         ]
     }
 }
@@ -372,7 +380,7 @@ iptables -t nat -L POSTROUTING -n -v
 ```
 
 You should see:
-- SSH (port 22), port 443, 8388, 8443 accepted
+- SSH (port 22), port 443, 8388, 80 accepted
 - Default DROP policy on INPUT
 - ACCEPT policy on OUTPUT (for DNS and outbound connections)
 - MASQUERADE rules in NAT table
@@ -474,14 +482,14 @@ netstat -tulpn | grep 8388
 
 # Check V2Ray
 rc-service v2ray status
-netstat -tulpn | grep 8443
+netstat -tulpn | grep 80
 ```
 
 **Expected Output**:
 - WireGuard interface `wg0` should be listed
 - udp2raw process running on port 443
 - Shadowsocks listening on 0.0.0.0:8388 (TCP/UDP)
-- V2Ray listening on :::8443 (TCP)
+- V2Ray listening on :::80 (WebSocket)
 
 ---
 
@@ -682,14 +690,14 @@ EOF
 ### Verify All Listening Ports
 
 ```bash
-ssh root@YOUR_SERVER_IP "netstat -tulpn | grep -E '443|8388|8443|51820'"
+ssh root@YOUR_SERVER_IP "netstat -tulpn | grep -E '443|8388|80|51820'"
 ```
 
 **Expected**:
 - Port 51820: WireGuard (localhost only, UDP)
 - Port 443: udp2raw (all interfaces, TCP)
 - Port 8388: Shadowsocks (0.0.0.0, TCP/UDP)
-- Port 8443: V2Ray (:::, TCP)
+- Port 80: V2Ray (:::, WebSocket)
 
 ### View Protocol Logs
 
@@ -791,7 +799,7 @@ ssh root@YOUR_SERVER_IP "iptables -t nat -I POSTROUTING -o eth0 -j MASQUERADE &&
 1. Check V2Ray is running:
    ```bash
    rc-service v2ray status
-   netstat -tulpn | grep 8443
+   netstat -tulpn | grep 80
    ```
 
 2. Check user UUID is in config:
@@ -809,12 +817,12 @@ ssh root@YOUR_SERVER_IP "iptables -t nat -I POSTROUTING -o eth0 -j MASQUERADE &&
 
 1. Check firewall allows all ports:
    ```bash
-   ssh root@YOUR_SERVER_IP "iptables -L -n | grep -E '443|8388|8443'"
+   ssh root@YOUR_SERVER_IP "iptables -L -n | grep -E '443|8388|80'"
    ```
 
 2. Verify services are listening:
    ```bash
-   ssh root@YOUR_SERVER_IP "netstat -tulpn | grep -E '443|8388|8443'"
+   ssh root@YOUR_SERVER_IP "netstat -tulpn | grep -E '443|8388|80'"
    ```
 
 3. Check firewall activated:

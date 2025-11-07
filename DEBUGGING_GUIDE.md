@@ -191,7 +191,7 @@ ssh root@YOUR_SERVER_IP "v2ray version"
 
 **Check Active Connections:**
 ```bash
-ssh root@YOUR_SERVER_IP "netstat -tulpn | grep :8443"
+ssh root@YOUR_SERVER_IP "netstat -tulpn | grep :80"
 ```
 
 **View Both V2Ray Logs:**
@@ -208,7 +208,7 @@ ssh root@SERVER "tail -f /var/log/v2ray/error.log"
 | Problem | Solution |
 |---------|----------|
 | "invalid UUID" | Verify UUID matches between server and client |
-| Port 8443 not listening | Check if service is running: `rc-service v2ray status` |
+| Port 80 not listening | Check if service is running: `rc-service v2ray status` |
 | "connection rejected" | Check user is in /etc/v2ray/config.json clients list |
 | VMess handshake failed | Ensure AlterID is 0 on both client and server |
 
@@ -282,8 +282,8 @@ ssh root@SERVER "awall list | grep 8388"
 # Check if V2Ray service is running
 ssh root@SERVER "rc-service v2ray status"
 
-# Check if port 8443 is open
-ssh root@SERVER "netstat -tulpn | grep 8443"
+# Check if port 80 is open
+ssh root@SERVER "netstat -tulpn | grep 80"
 
 # View V2Ray error logs
 ./capybara.py logs show --service v2ray
@@ -370,7 +370,7 @@ ssh root@SERVER "tcpdump -i any port 51820 -n"
 ssh root@SERVER "tcpdump -i any port 8388 -n"
 
 # V2Ray traffic
-ssh root@SERVER "tcpdump -i any port 8443 -n"
+ssh root@SERVER "tcpdump -i any port 80 -n"
 
 # udp2raw obfuscated traffic
 ssh root@SERVER "tcpdump -i any port 443 -n"
@@ -379,14 +379,14 @@ ssh root@SERVER "tcpdump -i any port 443 -n"
 ### Check for Port Conflicts
 
 ```bash
-ssh root@SERVER "netstat -tulpn | grep -E '443|8388|8443|51820'"
+ssh root@SERVER "netstat -tulpn | grep -E '443|8388|80|51820'"
 ```
 
 Expected output:
 ```
 tcp    0.0.0.0:443    LISTEN    12345/udp2raw
 tcp    0.0.0.0:8388   LISTEN    12346/ss-server
-tcp    0.0.0.0:8443   LISTEN    12347/v2ray
+tcp    0.0.0.0:80   LISTEN    12347/v2ray
 udp    0.0.0.0:51820  LISTEN    12348/wg-quick
 ```
 

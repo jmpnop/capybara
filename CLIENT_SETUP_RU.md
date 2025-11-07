@@ -72,7 +72,7 @@
    - IP сервера: IP адрес вашего VPN сервера
    - WireGuard (обфусцированный): Порт `443` (TCP, маскируется под HTTPS)
    - Shadowsocks: Порт `8388` (TCP/UDP)
-   - V2Ray: Порт `8443` (TCP)
+   - V2Ray: Порт `80` (WebSocket)
    - VPN сеть: `10.7.0.0/24`
 
 ---
@@ -531,7 +531,7 @@ V2Ray обеспечивает сильнейшую обфускацию исп�
 V2Ray VMess Configuration
 Username: alice
 Server: YOUR_SERVER_IP
-Port: 8443
+Port: 80
 UUID: 20411e00-3571-5874-a809-609bc91618ec
 AlterID: 0
 Network: tcp
@@ -561,7 +561,7 @@ vmess://eyJ2IjogIjIiLCAicHMiOiAi...
 3. Выберите **Type: VMess**
 4. Введите данные из `.txt` файла:
    - **Address:** IP сервера
-   - **Port:** 8443
+   - **Port:** 80
    - **UUID:** Из вашей конфигурации
    - **AlterID:** 0
    - **Security:** auto
@@ -603,7 +603,7 @@ vmess://eyJ2IjogIjIiLCAicHMiOiAi...
 4. Введите данные:
    - **Remarks:** alice (ваше имя пользователя)
    - **Address:** IP сервера
-   - **Port:** 8443
+   - **Port:** 80
    - **UUID:** Из конфигурации
    - **AlterID:** 0
    - **Security:** auto
@@ -634,7 +634,7 @@ brew install v2ray
 4. Выберите **VMess**
 5. Введите данные из вашего `.txt` файла:
    - **Address:** IP сервера
-   - **Port:** 8443
+   - **Port:** 80
    - **UUID:** Из конфигурации
    - **AlterID:** 0
    - **Security:** auto
@@ -938,7 +938,7 @@ sudo wg-quick up alice
 ПОРТЫ:
 - WireGuard: 443 (через udp2raw)
 - Shadowsocks: 8388
-- V2Ray: 8443
+- V2Ray: 80
 ```
 
 ---

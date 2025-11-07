@@ -51,7 +51,7 @@ chmod +x install_multi_vpn_server.sh
 - **Enables DNS resolution and proper NAT** for all protocols
 - Generates server keys
 - Sets up automatic startup
-- Configures ports: 443 (WireGuard/udp2raw), 8388 (Shadowsocks), 8443 (V2Ray)
+- Configures ports: 443 (WireGuard/udp2raw), 8388 (Shadowsocks), 80 (V2Ray WebSocket)
 
 **Already have WireGuard installed?** Add Shadowsocks + V2Ray to your existing server:
 ```bash
@@ -108,12 +108,13 @@ Capybara supports three battle-tested protocols, each with unique strengths:
 - **Setup**: Scan QR code, connect immediately
 - **Use case**: Perfect for phones, backup protocol
 
-### 3. V2Ray VMess (Port 8443)
-**Best for**: Advanced obfuscation, highly restrictive networks
-- **Obfuscation**: Strong traffic masking capabilities
+### 3. V2Ray VMess + WebSocket (Port 80)
+**Best for**: Mobile networks, DPI evasion, highly restrictive networks
+- **Obfuscation**: WebSocket on port 80 (HTTP) - hard to block
+- **Mobile-Optimized**: Works on Beeline, MTS, Megafon mobile networks
 - **Flexibility**: Highly configurable transport options
 - **Setup**: Scan QR code or manual configuration
-- **Use case**: Last resort when other protocols are blocked
+- **Use case**: When Shadowsocks is blocked on mobile networks
 
 **Why Three Protocols?**
 - **Redundancy**: If one is blocked, switch to another
@@ -450,7 +451,7 @@ Check which service is failing:
 ssh root@YOUR_SERVER_IP << 'EOF'
 rc-service shadowsocks-rust status
 rc-service v2ray status
-netstat -tulpn | grep -E '8388|8443'
+netstat -tulpn | grep -E '8388|80'
 EOF
 ```
 
@@ -607,6 +608,6 @@ Previously named "vpn_manager", we renamed it to Capybara because:
 | **Setup Complexity** | High | Low | Medium |
 | **Client Apps** | WireGuard + udp2raw | Many options | Many options |
 | **Best For** | Desktop, Max Speed | Mobile, Quick Setup | Advanced Evasion |
-| **Port** | 443 (TCP-disguised) | 8388 (TCP/UDP) | 8443 (TCP) |
+| **Port** | 443 (TCP-disguised) | 8388 (TCP/UDP) | 80 (WebSocket) |
 
 **Recommendation**: Use WireGuard for desktops, Shadowsocks for mobile devices, and V2Ray as fallback in highly restrictive networks.
