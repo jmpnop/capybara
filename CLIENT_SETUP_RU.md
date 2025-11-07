@@ -188,7 +188,7 @@ MTU = 1280
 DNS = 1.1.1.1, 8.8.8.8
 
 # Запуск клиента udp2raw при подключении
-PreUp = sudo /usr/local/bin/udp2raw -c -l 127.0.0.1:4096 -r IP_ВАШЕГО_СЕРВЕРА:443 -k SecureVPN2025Obfuscate --raw-mode faketcp --cipher-mode xor --auth-mode hmac_sha1 -a &
+PreUp = sudo /usr/local/bin/udp2raw -c -l 127.0.0.1:4096 -r IP_ВАШЕГО_СЕРВЕРА:443 -k YOUR_UDP2RAW_PASSWORD --raw-mode faketcp --cipher-mode xor --auth-mode hmac_sha1 -a &
 PostDown = sudo killall udp2raw
 
 [Peer]
@@ -386,13 +386,13 @@ Shadowsocks идеален для мобильных устройств с на�
 ```
 Shadowsocks Configuration
 Username: alice
-Server: 66.42.119.38
+Server: YOUR_SERVER_IP
 Port: 8388
 Password: a0xp4kKpSoJPeUxCVjactg==
 Method: chacha20-ietf-poly1305
 
 Connection URL:
-ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTphMHhwNGtLcFNvSlBlVXhDVmphY3RnPT0=@66.42.119.38:8388
+ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTphMHhwNGtLcFNvSlBlVXhDVmphY3RnPT0=@YOUR_SERVER_IP:8388
 ```
 
 ### Шаг 3: Настройка через QR код (Проще всего)
@@ -530,7 +530,7 @@ V2Ray обеспечивает сильнейшую обфускацию исп�
 ```
 V2Ray VMess Configuration
 Username: alice
-Server: 66.42.119.38
+Server: YOUR_SERVER_IP
 Port: 8443
 UUID: 20411e00-3571-5874-a809-609bc91618ec
 AlterID: 0
@@ -719,7 +719,7 @@ DNS = 1.1.1.1, 8.8.8.8
 # DNS серверы при подключении
 
 # Обфускация udp2raw (КЛЮЧЕВАЯ ФУНКЦИЯ!)
-PreUp = sudo /usr/local/bin/udp2raw -c -l 127.0.0.1:4096 -r IP_СЕРВЕРА:443 -k SecureVPN2025Obfuscate --raw-mode faketcp --cipher-mode xor --auth-mode hmac_sha1 -a &
+PreUp = sudo /usr/local/bin/udp2raw -c -l 127.0.0.1:4096 -r IP_СЕРВЕРА:443 -k YOUR_UDP2RAW_PASSWORD --raw-mode faketcp --cipher-mode xor --auth-mode hmac_sha1 -a &
 # Запускает клиент udp2raw в режиме fake TCP на порту 443
 # -c = режим клиента
 # -l = локальный адрес прослушивания (127.0.0.1:4096)

@@ -22,6 +22,15 @@ __pycache__/
 .capybara_config.yaml
 config.yaml
 
+# Private keys and sensitive files
+*.key
+*.pem
+*_private*
+*_secret*
+
+# Backup directories (may contain sensitive info)
+docs_backup_*/
+
 # OS files
 .DS_Store
 Thumbs.db

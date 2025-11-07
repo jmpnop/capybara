@@ -1,14 +1,17 @@
-# WireGuard VPN Server Setup Guide with udp2raw Obfuscation
+# Multi-Protocol Censorship-Resistant VPN Server Setup Guide
 
-Complete step-by-step guide for setting up a WireGuard VPN server on Alpine Linux with udp2raw obfuscation to bypass Deep Packet Inspection (DPI).
+Complete step-by-step guide for setting up a multi-protocol VPN server on Alpine Linux with three anti-censorship protocols: WireGuard (with udp2raw), Shadowsocks, and V2Ray.
 
 ## Server Information
 - **Provider**: Vultr.com
 - **OS**: Alpine Linux v3.22
-- **Server IP**: 66.42.119.38
+- **Server IP**: YOUR_SERVER_IP
 - **VPN Network**: 10.7.0.0/24
-- **Obfuscation Port**: 443 (UDP disguised as TCP)
-- **WireGuard Port**: 51820 (localhost only)
+
+## Protocols Installed
+1. **WireGuard + udp2raw** - Port 443 (UDP disguised as TCP, HTTPS obfuscation)
+2. **Shadowsocks** - Port 8388 (TCP/UDP, AEAD encryption)
+3. **V2Ray VMess** - Port 8443 (TCP, highly configurable)
 
 ## Prerequisites
 - Alpine Linux VPS with root access
@@ -20,7 +23,7 @@ Complete step-by-step guide for setting up a WireGuard VPN server on Alpine Linu
 ## Step 1: Connect and Verify System
 
 ```bash
-ssh root@66.42.119.38
+ssh root@YOUR_SERVER_IP
 uname -a
 cat /etc/os-release
 ```
@@ -34,13 +37,17 @@ cat /etc/os-release
 ```bash
 apk update
 apk upgrade
-apk add wireguard-tools-wg-quick iptables awall
+apk add wireguard-tools-wg-quick iptables awall curl unzip
 ```
 
 **Packages Installed**:
 - `wireguard-tools-wg-quick` - WireGuard VPN tools and wg-quick utility
 - `iptables` - Firewall and NAT
 - `awall` - Alpine Wall firewall configuration tool
+- `curl` - For downloading V2Ray and Shadowsocks
+- `unzip` - For extracting V2Ray archive
+
+**Note**: Shadowsocks and V2Ray will be installed manually from GitHub releases as Alpine packages may be outdated
 
 ---
 
@@ -94,7 +101,45 @@ chmod +x /usr/local/bin/udp2raw
 
 ---
 
-## Step 6: Configure WireGuard with Obfuscation
+## Step 6: Install Shadowsocks
+
+```bash
+cd /tmp
+wget https://github.com/shadowsocks/shadowsocks-rust/releases/download/v1.23.1/shadowsocks-v1.23.1.x86_64-unknown-linux-musl.tar.xz
+tar -xf shadowsocks-v1.23.1.x86_64-unknown-linux-musl.tar.xz
+mv ssserver sslocal ssmanager ssservice ssurl /usr/local/bin/
+chmod +x /usr/local/bin/ss*
+```
+
+**Verify installation**:
+```bash
+/usr/local/bin/ssserver --version
+```
+
+**Expected Output**: `shadowsocks 1.23.1`
+
+---
+
+## Step 7: Install V2Ray
+
+```bash
+cd /tmp
+wget https://github.com/v2fly/v2ray-core/releases/latest/download/v2ray-linux-64.zip
+mkdir -p /usr/local/v2ray
+unzip -o v2ray-linux-64.zip -d /usr/local/v2ray/
+chmod +x /usr/local/v2ray/v2ray
+```
+
+**Verify installation**:
+```bash
+/usr/local/v2ray/v2ray version | head -3
+```
+
+**Expected Output**: `V2Ray 5.41.0 (or later)`
+
+---
+
+## Step 8: Configure WireGuard with Obfuscation
 
 Create the WireGuard configuration file:
 
@@ -107,7 +152,7 @@ ListenPort = 51820
 MTU = 1280
 
 # udp2raw obfuscation (faketcp mode)
-PreUp = /usr/local/bin/udp2raw -s -l 0.0.0.0:443 -r 127.0.0.1:51820 -k SecureVPN2025Obfuscate --raw-mode faketcp --cipher-mode xor --auth-mode hmac_sha1 -a --fix-gro >/var/log/udp2raw.log 2>&1 &
+PreUp = /usr/local/bin/udp2raw -s -l 0.0.0.0:443 -r 127.0.0.1:51820 -k YOUR_UDP2RAW_PASSWORD --raw-mode faketcp --cipher-mode xor --auth-mode hmac_sha1 -a --fix-gro >/var/log/udp2raw.log 2>&1 &
 PostDown = killall udp2raw || true
 
 # Enable NAT for clients
@@ -129,12 +174,74 @@ chmod 600 /etc/wireguard/wg0.conf
 **Important Notes**:
 - Replace `PrivateKey` with your generated server private key
 - Replace `eth0` with your actual internet interface name
-- Password `SecureVPN2025Obfuscate` must match on client and server
+- Password `YOUR_UDP2RAW_PASSWORD` must match on client and server
 - Port 443 is used to mimic HTTPS traffic (helps bypass DPI)
 
 ---
 
-## Step 7: Enable IP Forwarding
+## Step 9: Configure Shadowsocks
+
+```bash
+mkdir -p /etc/shadowsocks-rust
+
+cat > /etc/shadowsocks-rust/config.json << 'EOF'
+{
+    "server": "0.0.0.0",
+    "server_port": 8388,
+    "password": "YOUR_SHADOWSOCKS_PASSWORD",
+    "method": "chacha20-ietf-poly1305",
+    "timeout": 300,
+    "fast_open": true,
+    "mode": "tcp_and_udp"
+}
+EOF
+```
+
+**Important**: Change the password to a strong, unique password.
+
+---
+
+## Step 10: Configure V2Ray
+
+```bash
+mkdir -p /etc/v2ray
+mkdir -p /var/log/v2ray
+
+cat > /etc/v2ray/config.json << 'EOF'
+{
+  "log": {
+    "access": "/var/log/v2ray/access.log",
+    "error": "/var/log/v2ray/error.log",
+    "loglevel": "warning"
+  },
+  "inbounds": [
+    {
+      "port": 8443,
+      "protocol": "vmess",
+      "settings": {
+        "clients": []
+      },
+      "streamSettings": {
+        "network": "tcp",
+        "security": "none"
+      }
+    }
+  ],
+  "outbounds": [
+    {
+      "protocol": "freedom",
+      "settings": {}
+    }
+  ]
+}
+EOF
+```
+
+**Note**: Users will be added to the `clients` array using the Capybara management tool.
+
+---
+
+## Step 11: Enable IP Forwarding
 
 ```bash
 grep -q 'net.ipv4.ip_forward' /etc/sysctl.conf || echo 'net.ipv4.ip_forward = 1' >> /etc/sysctl.conf
@@ -146,9 +253,9 @@ sysctl net.ipv4.ip_forward
 
 ---
 
-## Step 8: Configure Firewall with Awall
+## Step 12: Configure Firewall with Awall
 
-### 8.1 Create Custom Service Definition
+### 12.1 Create Custom Service Definition
 
 ```bash
 mkdir -p /etc/awall/private
@@ -156,20 +263,29 @@ cat > /etc/awall/private/custom-services.json << 'EOF'
 {
     "service": {
         "wireguard-obfs": [
-            { "proto": "udp", "port": 443 }
+            { "proto": "tcp", "port": 443 }
+        ],
+        "shadowsocks": [
+            { "proto": "tcp", "port": 8388 },
+            { "proto": "udp", "port": 8388 }
+        ],
+        "v2ray": [
+            { "proto": "tcp", "port": 8443 }
         ]
     }
 }
 EOF
 ```
 
-### 8.2 Create Base Cloud Server Policy
+### 12.2 Create Multi-Protocol VPN Policy
+
+**IMPORTANT**: This configuration allows outbound traffic for DNS resolution and proper NAT for all protocols.
 
 ```bash
 mkdir -p /etc/awall/optional
-cat > /etc/awall/optional/cloud-server.json << 'EOF'
+cat > /etc/awall/optional/multi-vpn.json << 'EOF'
 {
-  "description": "Protect cloud server",
+  "description": "Multi-protocol VPN server",
   "import": "custom-services",
   "variable": { "internet_if": "eth0" },
   "zone": {
@@ -178,50 +294,37 @@ cat > /etc/awall/optional/cloud-server.json << 'EOF'
   },
   "policy": [
     { "in": "internet", "action": "drop" },
+    { "out": "internet", "action": "accept" },
     { "in": "vpn", "out": "internet", "action": "accept" },
     { "out": "vpn", "in": "internet", "action": "accept" },
     { "action": "reject" }
   ],
-  "snat": [ { "out": "internet", "src": "10.7.0.0/24" } ]
+  "filter": [
+    {
+      "in": "internet",
+      "service": ["wireguard-obfs", "shadowsocks", "v2ray", "ssh"],
+      "action": "accept"
+    },
+    {
+      "out": "internet",
+      "service": ["dns", "http", "https"],
+      "action": "accept"
+    }
+  ],
+  "snat": [
+    { "out": "internet", "src": "10.7.0.0/24" },
+    { "out": "internet" }
+  ]
 }
 EOF
 ```
 
-### 8.3 Allow WireGuard Traffic
+**Key Configuration Points**:
+- `"out": "internet", "action": "accept"` - Allows server to make outbound connections (DNS, downloads)
+- `"out": "internet", "service": ["dns", "http", "https"]` - Explicitly allows DNS and web traffic
+- Two SNAT rules - one for WireGuard network, one for all other traffic (Shadowsocks/V2Ray)
 
-```bash
-cat > /etc/awall/optional/wireguard-obfs.json << 'EOF'
-{
-    "description": "Allow incoming obfuscated WireGuard on port 443",
-    "filter": [
-        {
-            "in": "internet",
-            "service": "wireguard-obfs",
-            "action": "accept"
-        }
-    ]
-}
-EOF
-```
-
-### 8.4 Allow SSH Access
-
-```bash
-cat > /etc/awall/optional/ssh-access.json << 'EOF'
-{
-    "description": "Allow incoming SSH access",
-    "filter": [
-        {
-            "in": "internet",
-            "service": "ssh",
-            "action": "accept"
-        }
-    ]
-}
-EOF
-```
-
-### 8.5 Reboot to Load New Kernel (if system was upgraded)
+### 12.3 Reboot to Load New Kernel (if system was upgraded)
 
 ```bash
 reboot
@@ -229,10 +332,10 @@ reboot
 
 Wait 30-60 seconds, then reconnect:
 ```bash
-ssh root@66.42.119.38
+ssh root@YOUR_SERVER_IP
 ```
 
-### 8.6 Load Required Kernel Modules
+### 12.4 Load Required Kernel Modules
 
 ```bash
 modprobe ip_tables
@@ -245,18 +348,19 @@ modprobe iptable_filter
 lsmod | grep -E 'ip_tables|iptable_nat|nf_nat'
 ```
 
-### 8.7 Enable and Activate Awall Policies
+### 12.5 Enable and Activate Awall Policies
 
 ```bash
-awall enable cloud-server
-awall enable wireguard-obfs
-awall enable ssh-access
-echo '' | awall activate -f
+awall enable multi-vpn
+awall activate -f
 ```
 
-### 8.8 Save and Enable iptables at Boot
+### 12.6 Add Additional NAT Rule and Save iptables
+
+**IMPORTANT**: Add a catchall NAT rule for non-WireGuard traffic (Shadowsocks/V2Ray):
 
 ```bash
+iptables -t nat -I POSTROUTING -o eth0 -j MASQUERADE
 rc-update add iptables
 rc-service iptables save
 ```
@@ -264,42 +368,65 @@ rc-service iptables save
 **Verify firewall rules**:
 ```bash
 iptables -L -n | head -30
+iptables -t nat -L POSTROUTING -n -v
 ```
 
 You should see:
-- SSH (port 22) accepted
-- UDP port 443 accepted
-- Default DROP policy
+- SSH (port 22), port 443, 8388, 8443 accepted
+- Default DROP policy on INPUT
+- ACCEPT policy on OUTPUT (for DNS and outbound connections)
+- MASQUERADE rules in NAT table
 
 ---
 
-## Step 9: Start WireGuard Service
+## Step 13: Create Service Init Scripts
+
+### 13.1 Create Shadowsocks Init Script
 
 ```bash
-wg-quick up wg0
+cat > /etc/init.d/shadowsocks-rust << 'EOF'
+#!/sbin/openrc-run
+
+name="shadowsocks-rust"
+command="/usr/local/bin/ssserver"
+command_args="-c /etc/shadowsocks-rust/config.json"
+command_background=true
+pidfile="/run/${RC_SVCNAME}.pid"
+output_log="/var/log/shadowsocks.log"
+error_log="/var/log/shadowsocks.log"
+
+depend() {
+    need net
+    after firewall
+}
+EOF
+
+chmod +x /etc/init.d/shadowsocks-rust
 ```
 
-**Expected Output**:
-```
-[#] ip link add dev wg0 type wireguard
-[#] /usr/local/bin/udp2raw -s -l 0.0.0.0:443 -r 127.0.0.1:51820...
-[#] wg setconf wg0 /dev/fd/63
-[#] ip -4 address add 10.7.0.1/24 dev wg0
-[#] ip link set mtu 1280 up dev wg0
-[#] iptables -A FORWARD -i wg0 -j ACCEPT...
-```
+### 13.2 Create V2Ray Init Script
 
-**Verify WireGuard is running**:
 ```bash
-wg show
-ps aux | grep udp2raw | grep -v grep
+cat > /etc/init.d/v2ray << 'EOF'
+#!/sbin/openrc-run
+
+name="v2ray"
+command="/usr/local/v2ray/v2ray"
+command_args="run -c /etc/v2ray/config.json"
+command_background=true
+pidfile="/run/${RC_SVCNAME}.pid"
+
+depend() {
+    need net
+    after firewall
+}
+EOF
+
+chmod +x /etc/init.d/v2ray
 ```
 
----
+### 13.3 Create WireGuard Startup Script
 
-## Step 10: Enable WireGuard at Boot
-
-Create startup script:
 ```bash
 cat > /etc/local.d/wireguard.start << 'EOF'
 #!/bin/sh
@@ -307,45 +434,130 @@ wg-quick up wg0
 EOF
 
 chmod +x /etc/local.d/wireguard.start
-rc-update add local default
 ```
 
 ---
 
-## Step 11: Generate Client Keys and Add First Client
+## Step 14: Enable and Start All Services
 
-### 11.1 Generate Client Keys
+### 14.1 Enable Services at Boot
 
 ```bash
-cd /etc/wireguard
-wg genkey | tee client1_private.key | wg pubkey > client1_public.key
-cat client1_private.key
-cat client1_public.key
+rc-update add local default
+rc-update add shadowsocks-rust default
+rc-update add v2ray default
 ```
 
-**Example Generated Keys**:
-- Private: `2MkhVZASXn/bBrOjrolSdNrIckiFBcu0GXOMjoiwDUc=`
-- Public: `kkFtFxmLRVNguNO/xx9avIaK5p8cmVEsYiBD1HhZBzQ=`
-
-### 11.2 Add Client Peer to Server
+### 14.2 Start All Services
 
 ```bash
+# Start WireGuard
+wg-quick up wg0
+
+# Start Shadowsocks
+rc-service shadowsocks-rust start
+
+# Start V2Ray
+rc-service v2ray start
+```
+
+### 14.3 Verify All Services Are Running
+
+```bash
+# Check WireGuard
+wg show
+ps aux | grep udp2raw | grep -v grep
+
+# Check Shadowsocks
+rc-service shadowsocks-rust status
+netstat -tulpn | grep 8388
+
+# Check V2Ray
+rc-service v2ray status
+netstat -tulpn | grep 8443
+```
+
+**Expected Output**:
+- WireGuard interface `wg0` should be listed
+- udp2raw process running on port 443
+- Shadowsocks listening on 0.0.0.0:8388 (TCP/UDP)
+- V2Ray listening on :::8443 (TCP)
+
+---
+
+## Step 15: User Management with Capybara CLI
+
+**IMPORTANT**: Instead of manually configuring users, use the Capybara management tool which automatically creates configs for all three protocols.
+
+### 15.1 Install Capybara on Your Local Machine
+
+```bash
+git clone https://github.com/jmpnop/capybara.git
+cd capybara
+pip3 install -r requirements.txt
+```
+
+### 15.2 Configure Capybara
+
+Create `~/.capybara_config.yaml`:
+
+```yaml
+server:
+  host: YOUR_SERVER_IP
+  port: 22
+  username: root
+  password: YOUR_SERVER_PASSWORD
+vpn:
+  interface: wg0
+  config_path: /etc/wireguard/wg0.conf
+  network: 10.7.0.0/24
+  server_ip: 10.7.0.1
+  next_client_ip: 2
+```
+
+### 15.3 Add Users (All Protocols)
+
+```bash
+./capybara.py user add alice --description "Alice's devices"
+```
+
+This automatically creates:
+- ✅ WireGuard config + QR code
+- ✅ Shadowsocks config + QR code
+- ✅ V2Ray config + QR code
+
+All configs are saved to `vpn_clients/` directory.
+
+### 15.4 Manual User Addition (Advanced)
+
+If you prefer manual setup or Capybara isn't available:
+
+**For WireGuard:**
+```bash
+cd /etc/wireguard
+wg genkey | tee client_private.key | wg pubkey > client_public.key
 cat >> /etc/wireguard/wg0.conf << 'EOF'
 
 [Peer]
-PublicKey = kkFtFxmLRVNguNO/xx9avIaK5p8cmVEsYiBD1HhZBzQ=
+PublicKey = <client_public_key>
 AllowedIPs = 10.7.0.2/32
 EOF
-```
-
-### 11.3 Reload WireGuard Configuration
-
-```bash
 wg syncconf wg0 <(wg-quick strip wg0)
-wg show
 ```
 
-You should now see the peer listed.
+**For V2Ray:**
+Generate a UUID and add to `/etc/v2ray/config.json` clients array:
+```json
+{
+  "id": "YOUR-UUID-HERE",
+  "alterId": 0,
+  "email": "user@capybara"
+}
+```
+Then restart: `rc-service v2ray restart`
+
+**For Shadowsocks:**
+Each user shares the server password or you can run multiple instances with different ports.
 
 ---
 
@@ -365,7 +577,7 @@ chmod +x udp2raw_mac_amd64  # or udp2raw_mac_arm64
 
 Open a terminal and run:
 ```bash
-./udp2raw_mac_amd64 -c -l 127.0.0.1:4096 -r 66.42.119.38:443 -k SecureVPN2025Obfuscate --raw-mode faketcp --cipher-mode xor --auth-mode hmac_sha1 -a --fix-gro
+./udp2raw_mac_amd64 -c -l 127.0.0.1:4096 -r YOUR_SERVER_IP:443 -k YOUR_UDP2RAW_PASSWORD --raw-mode faketcp --cipher-mode xor --auth-mode hmac_sha1 -a --fix-gro
 ```
 
 **Important**: Keep this terminal window open while using the VPN.
@@ -416,13 +628,13 @@ For each new client, repeat this process:
 ### 1. Generate New Client Keys
 
 ```bash
-ssh root@66.42.119.38 "cd /etc/wireguard && wg genkey | tee client2_private.key | wg pubkey > client2_public.key && cat client2_private.key && cat client2_public.key"
+ssh root@YOUR_SERVER_IP "cd /etc/wireguard && wg genkey | tee client2_private.key | wg pubkey > client2_public.key && cat client2_private.key && cat client2_public.key"
 ```
 
 ### 2. Add Peer to Server
 
 ```bash
-ssh root@66.42.119.38 "cat >> /etc/wireguard/wg0.conf << 'EOF'
+ssh root@YOUR_SERVER_IP "cat >> /etc/wireguard/wg0.conf << 'EOF'
 
 [Peer]
 PublicKey = <client2_public_key>
@@ -447,51 +659,95 @@ Same as above, but with:
 
 ## Verification and Monitoring
 
-### Check WireGuard Status
+### Check All Services Status
 
 ```bash
-ssh root@66.42.119.38 "wg show"
+# Using Capybara
+./capybara.py server status
+
+# Or manually
+ssh root@YOUR_SERVER_IP << 'EOF'
+echo "=== WireGuard ==="
+wg show
+ps aux | grep udp2raw | grep -v grep
+
+echo "=== Shadowsocks ==="
+rc-service shadowsocks-rust status
+
+echo "=== V2Ray ==="
+rc-service v2ray status
+EOF
 ```
 
-### Check udp2raw Process
+### Verify All Listening Ports
 
 ```bash
-ssh root@66.42.119.38 "ps aux | grep udp2raw | grep -v grep"
+ssh root@YOUR_SERVER_IP "netstat -tulpn | grep -E '443|8388|8443|51820'"
 ```
 
-### View udp2raw Logs
+**Expected**:
+- Port 51820: WireGuard (localhost only, UDP)
+- Port 443: udp2raw (all interfaces, TCP)
+- Port 8388: Shadowsocks (0.0.0.0, TCP/UDP)
+- Port 8443: V2Ray (:::, TCP)
+
+### View Protocol Logs
 
 ```bash
-ssh root@66.42.119.38 "tail -f /var/log/udp2raw.log"
+# Using Capybara
+./capybara.py logs show --service wireguard
+./capybara.py logs show --service shadowsocks
+./capybara.py logs show --service v2ray
+
+# Or manually
+ssh root@YOUR_SERVER_IP "tail -f /var/log/udp2raw.log"
+ssh root@YOUR_SERVER_IP "tail -f /var/log/shadowsocks.log"
+ssh root@YOUR_SERVER_IP "tail -f /var/log/v2ray/access.log"
+ssh root@YOUR_SERVER_IP "tail -f /var/log/v2ray/error.log"
 ```
 
-### Check Active Connections
+### Check Firewall and NAT Rules
 
 ```bash
-ssh root@66.42.119.38 "wg show wg0 endpoints"
-ssh root@66.42.119.38 "wg show wg0 transfer"
+ssh root@YOUR_SERVER_IP "iptables -L -n -v | head -30"
+ssh root@YOUR_SERVER_IP "iptables -t nat -L POSTROUTING -n -v"
 ```
 
-### Verify Listening Ports
-
-```bash
-ssh root@66.42.119.38 "netstat -ulnp | grep -E '443|51820'"
-```
-
-Expected:
-- Port 51820: WireGuard (localhost only)
-- Port 443: udp2raw (all interfaces)
-
-### Check Firewall Rules
-
-```bash
-ssh root@66.42.119.38 "iptables -L -n -v"
-ssh root@66.42.119.38 "iptables -t nat -L -n -v"
-```
+**Must have**:
+- Multiple MASQUERADE rules in NAT/POSTROUTING
+- ACCEPT policy on OUTPUT (or explicit DNS/HTTP/HTTPS rules)
 
 ---
 
 ## Troubleshooting
+
+### CRITICAL: VPN Connects But Websites Don't Load
+
+**Symptoms**: Client shows connected, can see traffic in logs, but browsers timeout or show "can't resolve host"
+
+**Root Cause**: Server can't resolve DNS or NAT is misconfigured
+
+**Solution**:
+```bash
+# 1. Test if server can resolve DNS
+ssh root@YOUR_SERVER_IP "nslookup google.com"
+
+# If it fails, check OUTPUT policy
+ssh root@YOUR_SERVER_IP "iptables -L OUTPUT -n | head -5"
+
+# 2. If OUTPUT policy is DROP, verify awall config allows outbound traffic
+ssh root@YOUR_SERVER_IP "cat /etc/awall/optional/multi-vpn.json | grep -A 3 policy"
+
+# Should have: { "out": "internet", "action": "accept" }
+
+# 3. Check NAT rules include catchall
+ssh root@YOUR_SERVER_IP "iptables -t nat -L POSTROUTING -n -v"
+
+# Must have: MASQUERADE  all  --  *      eth0    0.0.0.0/0    0.0.0.0/0
+
+# 4. Fix if missing
+ssh root@YOUR_SERVER_IP "iptables -t nat -I POSTROUTING -o eth0 -j MASQUERADE && rc-service iptables save"
+```
 
 ### WireGuard Won't Start
 
@@ -511,26 +767,60 @@ ssh root@66.42.119.38 "iptables -t nat -L -n -v"
    wg-quick up wg0
    ```
 
-### Client Can't Connect
+### Shadowsocks Won't Start
 
-1. Verify udp2raw is running on client
-2. Check server firewall allows UDP 443
-3. Verify keys match (client private <-> client public on server)
-4. Check IP addresses don't conflict
-
-### No Internet on Client
-
-1. Verify IP forwarding enabled on server:
+1. Check config has password:
    ```bash
-   sysctl net.ipv4.ip_forward
+   cat /etc/shadowsocks-rust/config.json
+   ```
+   Must have `"password": "your_password_here"`
+
+2. Check binary exists:
+   ```bash
+   which ssserver
+   ls -la /usr/local/bin/ssserver
    ```
 
-2. Check NAT rules:
+3. View logs:
    ```bash
-   iptables -t nat -L -n -v | grep MASQUERADE
+   cat /var/log/shadowsocks.log
    ```
 
-3. Verify client AllowedIPs is set to `0.0.0.0/0`
+### V2Ray Not Accepting Connections
+
+1. Check V2Ray is running:
+   ```bash
+   rc-service v2ray status
+   netstat -tulpn | grep 8443
+   ```
+
+2. Check user UUID is in config:
+   ```bash
+   cat /etc/v2ray/config.json
+   ```
+
+3. View error logs:
+   ```bash
+   tail -20 /var/log/v2ray/error.log
+   tail -20 /var/log/v2ray/access.log
+   ```
+
+### Client Can't Connect to Any Protocol
+
+1. Check firewall allows all ports:
+   ```bash
+   ssh root@YOUR_SERVER_IP "iptables -L -n | grep -E '443|8388|8443'"
+   ```
+
+2. Verify services are listening:
+   ```bash
+   ssh root@YOUR_SERVER_IP "netstat -tulpn | grep -E '443|8388|8443'"
+   ```
+
+3. Check firewall activated:
+   ```bash
+   ssh root@YOUR_SERVER_IP "awall list"
+   ```
 
 ### High Latency or Packet Loss
 
@@ -541,14 +831,14 @@ ssh root@66.42.119.38 "iptables -t nat -L -n -v"
 
 2. Check server load:
    ```bash
-   ssh root@66.42.119.38 "top -bn1 | head -20"
+   ssh root@YOUR_SERVER_IP "top -bn1 | head -20"
    ```
 
 ---
 
 ## Security Considerations
 
-1. **Change the obfuscation password**: Replace `SecureVPN2025Obfuscate` with a strong, unique password
+1. **Change the obfuscation password**: Replace `YOUR_UDP2RAW_PASSWORD` with a strong, unique password
 2. **Rotate keys regularly**: Generate new server/client keys periodically
 3. **Monitor connections**: Regularly check `wg show` for unauthorized peers
 4. **Firewall**: The awall configuration provides good default security
@@ -561,29 +851,41 @@ ssh root@66.42.119.38 "iptables -t nat -L -n -v"
 
 | File/Directory | Purpose |
 |---|---|
+| **WireGuard** | |
 | `/etc/wireguard/wg0.conf` | WireGuard server configuration |
 | `/etc/wireguard/server_private.key` | Server private key |
 | `/etc/wireguard/server_public.key` | Server public key |
-| `/etc/wireguard/client*_*.key` | Client keys |
 | `/usr/local/bin/udp2raw` | udp2raw binary |
 | `/var/log/udp2raw.log` | udp2raw logs |
-| `/etc/awall/private/custom-services.json` | Custom service definitions |
-| `/etc/awall/optional/*.json` | Firewall policies |
 | `/etc/local.d/wireguard.start` | WireGuard auto-start script |
+| **Shadowsocks** | |
+| `/etc/shadowsocks-rust/config.json` | Shadowsocks configuration |
+| `/usr/local/bin/ssserver` | Shadowsocks server binary |
+| `/var/log/shadowsocks.log` | Shadowsocks logs |
+| `/etc/init.d/shadowsocks-rust` | Shadowsocks init script |
+| **V2Ray** | |
+| `/etc/v2ray/config.json` | V2Ray configuration (users in clients array) |
+| `/usr/local/v2ray/v2ray` | V2Ray binary |
+| `/var/log/v2ray/access.log` | V2Ray access logs |
+| `/var/log/v2ray/error.log` | V2Ray error logs |
+| `/etc/init.d/v2ray` | V2Ray init script |
+| **Firewall** | |
+| `/etc/awall/private/custom-services.json` | Custom service definitions (all 3 protocols) |
+| `/etc/awall/optional/multi-vpn.json` | Multi-protocol VPN firewall policy |
 
 ---
 
 ## Server Credentials Summary
 
 **Server Access**:
-- Email: polikashin@gmail.com
-- Password: myhdos-sywsox-6dojmU
-- Root Password: H7)a4(72PGSnN4Hh
-- IP: 66.42.119.38
+- Email: admin@example.com
+- Password: YOUR_PROVIDER_PASSWORD
+- Root Password: YOUR_SERVER_PASSWORD
+- IP: YOUR_SERVER_IP
 
 **VPN Configuration**:
 - Server Public Key: `D1m+SC4pa0UDNLXcKb/+cWO1rMXgvEQYl1CZlEFD/1A=`
-- Obfuscation Password: `SecureVPN2025Obfuscate`
+- Obfuscation Password: `YOUR_UDP2RAW_PASSWORD`
 - VPN Network: 10.7.0.0/24
 - Server VPN IP: 10.7.0.1
 - Client 1 VPN IP: 10.7.0.2
@@ -592,30 +894,42 @@ ssh root@66.42.119.38 "iptables -t nat -L -n -v"
 
 ## Quick Reference Commands
 
-### Restart WireGuard
+### Restart All Services
 ```bash
-ssh root@66.42.119.38 "wg-quick down wg0 && wg-quick up wg0"
+ssh root@YOUR_SERVER_IP << 'EOF'
+wg-quick down wg0 && wg-quick up wg0
+rc-service shadowsocks-rust restart
+rc-service v2ray restart
+EOF
 ```
 
-### Add New Client (Complete Process)
+### Check All Services Status
 ```bash
-# Generate keys
-ssh root@66.42.119.38 "cd /etc/wireguard && wg genkey | tee client_new_private.key | wg pubkey > client_new_public.key && echo 'Private:' && cat client_new_private.key && echo 'Public:' && cat client_new_public.key"
-
-# Add to server (replace PUBLIC_KEY and IP)
-ssh root@66.42.119.38 "echo -e '\n[Peer]\nPublicKey = PUBLIC_KEY\nAllowedIPs = 10.7.0.X/32' >> /etc/wireguard/wg0.conf && wg syncconf wg0 <(wg-quick strip wg0)"
+./capybara.py server status
+# Or manually:
+ssh root@YOUR_SERVER_IP "wg show; rc-service shadowsocks-rust status; rc-service v2ray status"
 ```
 
-### Remove Client
+### Add New User (All Protocols)
 ```bash
-# Remove from config file manually, then:
-ssh root@66.42.119.38 "wg syncconf wg0 <(wg-quick strip wg0)"
+./capybara.py user add username --description "Description"
 ```
 
-### View All Peers
+This automatically generates configs for all three protocols with QR codes.
+
+### View Logs for All Protocols
 ```bash
-ssh root@66.42.119.38 "wg show wg0 peers"
+./capybara.py logs show --service wireguard
+./capybara.py logs show --service shadowsocks
+./capybara.py logs show --service v2ray
 ```
+
+### Test Server DNS Resolution
+```bash
+ssh root@YOUR_SERVER_IP "nslookup google.com"
+```
+
+If DNS fails, check firewall allows outbound traffic
 
 ---
 

@@ -188,7 +188,7 @@ MTU = 1280
 DNS = 1.1.1.1, 8.8.8.8
 
 # Start udp2raw client on connection
-PreUp = sudo /usr/local/bin/udp2raw -c -l 127.0.0.1:4096 -r YOUR_SERVER_IP:443 -k SecureVPN2025Obfuscate --raw-mode faketcp --cipher-mode xor --auth-mode hmac_sha1 -a &
+PreUp = sudo /usr/local/bin/udp2raw -c -l 127.0.0.1:4096 -r YOUR_SERVER_IP:443 -k YOUR_UDP2RAW_PASSWORD --raw-mode faketcp --cipher-mode xor --auth-mode hmac_sha1 -a &
 PostDown = sudo killall udp2raw
 
 [Peer]
@@ -386,13 +386,13 @@ Your admin provided you with:
 ```
 Shadowsocks Configuration
 Username: alice
-Server: 66.42.119.38
+Server: YOUR_SERVER_IP
 Port: 8388
 Password: a0xp4kKpSoJPeUxCVjactg==
 Method: chacha20-ietf-poly1305
 
 Connection URL:
-ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTphMHhwNGtLcFNvSlBlVXhDVmphY3RnPT0=@66.42.119.38:8388
+ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTphMHhwNGtLcFNvSlBlVXhDVmphY3RnPT0=@YOUR_SERVER_IP:8388
 ```
 
 ### Step 3: Setup via QR Code (Easiest)
@@ -559,7 +559,7 @@ Your admin provided:
 ```
 V2Ray VMess Configuration
 Username: alice
-Server: 66.42.119.38
+Server: YOUR_SERVER_IP
 Port: 8443
 UUID: 20411e00-3571-5874-a809-609bc91618ec
 AlterID: 0
@@ -932,7 +932,7 @@ DNS = 1.1.1.1, 8.8.8.8
 # 8.8.8.8 = Google (reliable)
 
 # udp2raw obfuscation (THE KEY FEATURE!)
-PreUp = sudo /usr/local/bin/udp2raw -c -l 127.0.0.1:4096 -r SERVER_IP:443 -k SecureVPN2025Obfuscate --raw-mode faketcp --cipher-mode xor --auth-mode hmac_sha1 -a &
+PreUp = sudo /usr/local/bin/udp2raw -c -l 127.0.0.1:4096 -r SERVER_IP:443 -k YOUR_UDP2RAW_PASSWORD --raw-mode faketcp --cipher-mode xor --auth-mode hmac_sha1 -a &
 # Starts udp2raw client in fake TCP mode on port 443
 # -c = client mode
 # -l = local listen address (127.0.0.1:4096)

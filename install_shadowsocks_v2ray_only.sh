@@ -25,29 +25,40 @@ fi
 
 log_info "Installing Shadowsocks and V2Ray..."
 
-# Install Shadowsocks
-log_info "Step 1/5: Installing Shadowsocks..."
-# shadowsocks-libev not available in Alpine 3.22, use shadowsocks-rust
-apk add shadowsocks-rust curl unzip
+# Install dependencies
+log_info "Step 1/6: Installing dependencies..."
+apk add curl unzip
+log_success "Dependencies installed"
+
+# Install Shadowsocks from GitHub (Alpine package often outdated)
+log_info "Step 2/6: Installing Shadowsocks from GitHub..."
+cd /tmp
+wget https://github.com/shadowsocks/shadowsocks-rust/releases/download/v1.23.1/shadowsocks-v1.23.1.x86_64-unknown-linux-musl.tar.xz
+tar -xf shadowsocks-v1.23.1.x86_64-unknown-linux-musl.tar.xz
+mv ssserver sslocal ssmanager ssservice ssurl /usr/local/bin/
+chmod +x /usr/local/bin/ss*
+/usr/local/bin/ssserver --version
 log_success "Shadowsocks installed"
 
 # Install V2Ray
-log_info "Step 2/5: Installing V2Ray..."
+log_info "Step 3/6: Installing V2Ray..."
 cd /tmp
-wget -q https://github.com/v2fly/v2ray-core/releases/latest/download/v2ray-linux-64.zip
+wget https://github.com/v2fly/v2ray-core/releases/latest/download/v2ray-linux-64.zip
 mkdir -p /usr/local/v2ray
-unzip -oq v2ray-linux-64.zip -d /usr/local/v2ray/
+unzip -o v2ray-linux-64.zip -d /usr/local/v2ray/
 chmod +x /usr/local/v2ray/v2ray
+/usr/local/v2ray/v2ray version | head -3
 log_success "V2Ray installed"
 
 # Configure Shadowsocks
-log_info "Step 3/5: Configuring Shadowsocks..."
-mkdir -p /etc/shadowsocks-libev/users
+log_info "Step 4/6: Configuring Shadowsocks..."
+mkdir -p /etc/shadowsocks-rust
 
-cat > /etc/shadowsocks-libev/config.json << 'EOF'
+cat > /etc/shadowsocks-rust/config.json << 'EOF'
 {
     "server": "0.0.0.0",
     "server_port": 8388,
+    "password": "YOUR_SHADOWSOCKS_PASSWORD",
     "method": "chacha20-ietf-poly1305",
     "timeout": 300,
     "fast_open": true,
@@ -55,6 +66,7 @@ cat > /etc/shadowsocks-libev/config.json << 'EOF'
 }
 EOF
 log_success "Shadowsocks configured"
+log_info "⚠️  Remember to change the default password in /etc/shadowsocks-rust/config.json"
 
 # Configure V2Ray
 log_info "Step 4/5: Configuring V2Ray..."
@@ -92,24 +104,26 @@ EOF
 log_success "V2Ray configured"
 
 # Setup services
-log_info "Step 5/5: Setting up services..."
+log_info "Step 5/6: Setting up services..."
 
 # Shadowsocks service
-cat > /etc/init.d/shadowsocks << 'EOF'
+cat > /etc/init.d/shadowsocks-rust << 'EOF'
 #!/sbin/openrc-run
 
-name="shadowsocks"
-command="/usr/bin/ssserver"
-command_args="-c /etc/shadowsocks-libev/config.json"
+name="shadowsocks-rust"
+command="/usr/local/bin/ssserver"
+command_args="-c /etc/shadowsocks-rust/config.json"
 command_background=true
 pidfile="/run/${RC_SVCNAME}.pid"
+output_log="/var/log/shadowsocks.log"
+error_log="/var/log/shadowsocks.log"
 
 depend() {
     need net
     after firewall
 }
 EOF
-chmod +x /etc/init.d/shadowsocks
+chmod +x /etc/init.d/shadowsocks-rust
 
 # V2Ray service
 cat > /etc/init.d/v2ray << 'EOF'
@@ -147,10 +161,11 @@ cat > /etc/awall/private/custom-services.json << 'EOF'
 }
 EOF
 
-# Check if multi-vpn policy exists, if not create it
-if [ ! -f /etc/awall/optional/multi-vpn.json ]; then
-    mkdir -p /etc/awall/optional
-    cat > /etc/awall/optional/multi-vpn.json << 'EOF'
+# Update firewall configuration with critical DNS and NAT fixes
+log_info "Step 6/6: Configuring firewall with DNS and NAT fixes..."
+
+mkdir -p /etc/awall/optional
+cat > /etc/awall/optional/multi-vpn.json << 'EOF'
 {
   "description": "Multi-protocol VPN server",
   "import": "custom-services",
@@ -161,6 +176,7 @@ if [ ! -f /etc/awall/optional/multi-vpn.json ]; then
   },
   "policy": [
     { "in": "internet", "action": "drop" },
+    { "out": "internet", "action": "accept" },
     { "in": "vpn", "out": "internet", "action": "accept" },
     { "out": "vpn", "in": "internet", "action": "accept" },
     { "action": "reject" }
@@ -170,32 +186,70 @@ if [ ! -f /etc/awall/optional/multi-vpn.json ]; then
       "in": "internet",
       "service": ["wireguard-obfs", "shadowsocks", "v2ray", "ssh"],
       "action": "accept"
+    },
+    {
+      "out": "internet",
+      "service": ["dns", "http", "https"],
+      "action": "accept"
     }
   ],
-  "snat": [ { "out": "internet", "src": "10.7.0.0/24" } ]
+  "snat": [
+    { "out": "internet", "src": "10.7.0.0/24" },
+    { "out": "internet" }
+  ]
 }
 EOF
-    awall enable multi-vpn
-fi
 
+awall enable multi-vpn
 awall activate -f
 
+# Add catchall NAT rule for Shadowsocks/V2Ray traffic
+iptables -t nat -I POSTROUTING -o eth0 -j MASQUERADE
+rc-service iptables save
+
+log_success "Firewall configured with DNS and NAT support"
+
 # Enable and start services
-rc-update add shadowsocks default
+rc-update add shadowsocks-rust default
 rc-update add v2ray default
-rc-service shadowsocks start
+rc-service shadowsocks-rust start
 rc-service v2ray start
+
+sleep 2
 
 log_success "All services started"
 
+# Verify services
+echo ""
+echo "${CYAN}Verifying service status...${NC}"
+rc-service shadowsocks-rust status
+rc-service v2ray status
+
 echo ""
 echo "${GREEN}========================================${NC}"
-echo "${GREEN}  Shadowsocks and V2Ray installed!${NC}"
+echo "${GREEN}  ✅ Shadowsocks and V2Ray installed!${NC}"
 echo "${GREEN}========================================${NC}"
 echo ""
-echo "${CYAN}Shadowsocks:${NC} Port 8388 (TCP/UDP)"
-echo "${CYAN}V2Ray:${NC} Port 8443 (TCP)"
+echo "${CYAN}Installed Services:${NC}"
+echo "  • Shadowsocks: Port 8388 (TCP/UDP)"
+echo "  • V2Ray: Port 8443 (TCP)"
 echo ""
-echo "Use Capybara CLI to add users:"
-echo "  ./capybara.py user add alice --protocols all"
+echo "${CYAN}Firewall Configured:${NC}"
+echo "  ✅ Inbound: Ports 443, 8388, 8443, SSH"
+echo "  ✅ Outbound: DNS, HTTP, HTTPS enabled"
+echo "  ✅ NAT: Configured for all VPN traffic"
+echo ""
+echo "${CYAN}Log Locations:${NC}"
+echo "  • Shadowsocks: /var/log/shadowsocks.log"
+echo "  • V2Ray: /var/log/v2ray/access.log, /var/log/v2ray/error.log"
+echo ""
+echo "${YELLOW}Next Steps:${NC}"
+echo "  1. Change Shadowsocks password in /etc/shadowsocks-rust/config.json"
+echo "  2. Use Capybara CLI to add users:"
+echo "     ./capybara.py user add alice --description \"User description\""
+echo "  3. QR codes will be generated automatically for all protocols"
+echo ""
+echo "${CYAN}Verify Installation:${NC}"
+echo "  netstat -tulpn | grep -E '8388|8443'"
+echo "  nslookup google.com  # Test DNS resolution"
 echo ""

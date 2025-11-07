@@ -140,7 +140,7 @@ This means:
 1. Start udp2raw client:
 ```bash
 ./udp2raw -c -l 127.0.0.1:4096 -r YOUR_SERVER:443 \
-  -k SecureVPN2025Obfuscate --raw-mode faketcp \
+  -k YOUR_UDP2RAW_PASSWORD --raw-mode faketcp \
   --cipher-mode xor --auth-mode hmac_sha1 -a --fix-gro
 ```
 

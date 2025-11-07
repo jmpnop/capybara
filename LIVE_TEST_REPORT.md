@@ -3,7 +3,7 @@
 **Date:** November 6, 2025
 **Version:** 3.0.0
 **Tester:** Automated Live Testing
-**Server:** 66.42.119.38 (Alpine Linux 3.22)
+**Server:** YOUR_SERVER_IP (Alpine Linux 3.22)
 
 ---
 
@@ -63,13 +63,13 @@ Multi-protocol VPN user creation successfully tested end-to-end. All three proto
 **Content Verification:**
 ```
 Username: fulltest
-Server: 66.42.119.38
+Server: YOUR_SERVER_IP
 Port: 9037
 Password: eMEQQkLDIJL68DKiQFpuUA==
 Method: chacha20-ietf-poly1305
 
 Connection URL:
-ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTplTUVRUWtMRElKTDY4REtpUUZwdVVBPT0=@66.42.119.38:9037
+ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTplTUVRUWtMRElKTDY4REtpUUZwdVVBPT0=@YOUR_SERVER_IP:9037
 ```
 
 **Server-Side Verification:**
@@ -90,7 +90,7 @@ ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTplTUVRUWtMRElKTDY4REtpUUZwdVVBPT0=@66.42.119.
 **Content Verification:**
 ```
 Username: fulltest
-Server: 66.42.119.38
+Server: YOUR_SERVER_IP
 Port: 8443
 UUID: 20411e00-3571-5874-a809-609bc91618ec
 AlterID: 0
@@ -557,7 +557,7 @@ The multi-protocol VPN management system is **fully functional** with:
 
 All test artifacts saved to:
 ```
-/Users/pasha/PycharmProjects/o/vpn_clients/
+/path/to/vpn_clients/
 ├── fulltest_20251106_133951_wireguard.conf
 ├── fulltest_20251106_133951_wireguard_qr.png
 ├── fulltest_20251106_133951_shadowsocks.txt

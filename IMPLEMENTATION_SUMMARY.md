@@ -193,7 +193,7 @@ Successfully implemented **Option C - Full Featured** with all advanced VPN mana
 ## 📁 File Structure
 
 ```
-/Users/pasha/PycharmProjects/o/
+/path/to/
 ├── capybara.py                     # Main script (1,600+ lines)
 ├── requirements.txt                # Python dependencies
 ├── README.md                       # Updated main introduction
@@ -553,8 +553,8 @@ These remain as future possibilities:
 
 **Current Version:** 2.0.0 (Full Featured)
 **Status:** ✅ Production Ready
-**Location:** `/Users/pasha/PycharmProjects/o/capybara.py`
-**Server:** 66.42.119.38 (Alpine Linux 3.22)
+**Location:** `/path/to/capybara.py`
+**Server:** YOUR_SERVER_IP (Alpine Linux 3.22)
 **Tests:** All passing
 **Documentation:** Complete
 
@@ -564,7 +564,7 @@ These remain as future possibilities:
 
 ### Quick Test
 ```bash
-cd /Users/pasha/PycharmProjects/o
+cd /path/to
 
 # Test all new features
 ./capybara.py logs show --lines 10

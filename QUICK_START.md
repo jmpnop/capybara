@@ -3,7 +3,7 @@
 ## Installation (One-Time Setup)
 
 ```bash
-cd /Users/pasha/PycharmProjects/o
+cd /path/to
 pip3 install -r requirements.txt
 chmod +x capybara.py
 ```
@@ -234,7 +234,7 @@ When you add a user, you get a config file. Send this to your user along with th
 
 2. **Run udp2raw:**
    ```bash
-   ./udp2raw -c -l 127.0.0.1:4096 -r 66.42.119.38:443 -k SecureVPN2025Obfuscate --raw-mode faketcp --cipher-mode xor --auth-mode hmac_sha1 -a --fix-gro
+   ./udp2raw -c -l 127.0.0.1:4096 -r YOUR_SERVER_IP:443 -k YOUR_UDP2RAW_PASSWORD --raw-mode faketcp --cipher-mode xor --auth-mode hmac_sha1 -a --fix-gro
    ```
    Keep this running in a terminal window.
 
@@ -256,7 +256,7 @@ When you add a user, you get a config file. Send this to your user along with th
 
 ```bash
 # Test SSH connection
-ssh root@66.42.119.38
+ssh root@YOUR_SERVER_IP
 
 # Check config
 ./capybara.py config
@@ -289,7 +289,7 @@ pip3 install -r requirements.txt
 Add to `~/.zshrc` or `~/.bashrc`:
 
 ```bash
-alias vpn="python3 /Users/pasha/PycharmProjects/o/capybara.py"
+alias vpn="python3 /path/to/capybara.py"
 ```
 
 Then use simply:

@@ -139,12 +139,26 @@ class VPNManager:
 
         return f"10.7.0.{next_ip}"
 
-    def generate_ss_password(self, username):
-        """Generate deterministic Shadowsocks password from username"""
-        # Use PBKDF2 to generate a strong password from username
-        salt = b'capybara_ss_salt_2025'
-        key = hashlib.pbkdf2_hmac('sha256', username.encode(), salt, 100000, dklen=16)
-        return base64.b64encode(key).decode('utf-8')
+    def generate_ss_password(self, username, ssh=None):
+        """Get Shadowsocks password from server config
+
+        Note: Shadowsocks-rust uses a shared password for all users.
+        This method fetches the password from the server's configuration.
+        """
+        if ssh is None:
+            # Fallback to deterministic password if SSH not provided (backwards compat)
+            salt = b'capybara_ss_salt_2025'
+            key = hashlib.pbkdf2_hmac('sha256', username.encode(), salt, 100000, dklen=16)
+            return base64.b64encode(key).decode('utf-8')
+
+        try:
+            # Fetch password from server config
+            output, _, _ = ssh.execute("cat /etc/shadowsocks-rust/config.json")
+            config = json.loads(output)
+            return config.get('password', 'CapybaraVPN2025!DefaultPassword')
+        except Exception:
+            # Fallback to default if config can't be read
+            return 'CapybaraVPN2025!DefaultPassword'
 
     def generate_v2ray_uuid(self, username):
         """Generate deterministic V2Ray UUID from username"""
@@ -181,29 +195,20 @@ class VPNManager:
         return f"vmess://{encoded}"
 
     def add_shadowsocks_user(self, ssh, username, password, port=8388):
-        """Add user to Shadowsocks"""
-        # Create user-specific config file
-        user_config = {
-            "server": "0.0.0.0",
-            "server_port": port + hash(username) % 1000,  # Unique port per user
-            "password": password,
-            "method": "chacha20-ietf-poly1305",
-            "timeout": 300,
-            "fast_open": True,
-            "mode": "tcp_and_udp"
-        }
+        """Add user to Shadowsocks
 
-        config_path = f"/etc/shadowsocks-libev/users/{username}.json"
-        config_json = json.dumps(user_config, indent=2)
+        Note: Currently uses shared Shadowsocks server with single password.
+        For per-user passwords, you would need to run multiple ssserver instances.
+        """
+        # Shadowsocks-rust uses a shared server configuration
+        # Users are not added individually but share the server password
+        # The password used in client configs is the server's password
 
-        # Write config
-        ssh.execute(f"mkdir -p /etc/shadowsocks-libev/users")
-        ssh.execute(f"cat > {config_path} << 'EOFSS'\n{config_json}\nEOFSS")
+        # This method primarily exists to maintain compatibility with the add_user workflow
+        # The actual Shadowsocks server password is configured in /etc/shadowsocks-rust/config.json
 
-        # Start user's SS instance (using ssserver from shadowsocks-rust)
-        ssh.execute(f"ssserver -c {config_path} &", check_error=False)
-
-        return user_config["server_port"]
+        # Return the standard port - all users connect to the same port
+        return port
 
     def add_v2ray_user(self, ssh, username, user_uuid):
         """Add user to V2Ray"""
@@ -355,11 +360,12 @@ PersistentKeepalive = 25
                 click.echo(f"\n{Fore.CYAN}{'='*60}")
                 click.echo(f"{Fore.YELLOW}Setting up Shadowsocks for '{username}'...")
 
-                ss_password = self.generate_ss_password(username)
-                ss_port = 8388  # Base port, can be made unique per user if needed
+                # Get shared password from server config
+                ss_password = self.generate_ss_password(username, ssh)
+                ss_port = 8388  # Standard port - all users share same server
                 ss_method = "chacha20-ietf-poly1305"
 
-                # Add user to Shadowsocks
+                # Note: Shadowsocks uses shared server, no per-user setup needed
                 self.add_shadowsocks_user(ssh, username, ss_password, ss_port)
 
                 # Generate Shadowsocks URL

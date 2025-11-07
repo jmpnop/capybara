@@ -22,7 +22,7 @@ A comprehensive Python-based command-line tool for managing your remote WireGuar
 ### Install Dependencies
 
 ```bash
-cd /Users/pasha/PycharmProjects/o
+cd /path/to
 pip install -r requirements.txt
 ```
 
@@ -42,7 +42,7 @@ chmod +x capybara.py
 
 ```bash
 # Add to ~/.zshrc or ~/.bashrc
-echo 'export PATH="$PATH:/Users/pasha/PycharmProjects/o"' >> ~/.zshrc
+echo 'export PATH="$PATH:/path/to"' >> ~/.zshrc
 source ~/.zshrc
 
 # Now you can run from anywhere
@@ -52,7 +52,7 @@ capybara.py --help
 Or create an alias:
 
 ```bash
-echo 'alias vpn="python3 /Users/pasha/PycharmProjects/o/capybara.py"' >> ~/.zshrc
+echo 'alias vpn="python3 /path/to/capybara.py"' >> ~/.zshrc
 source ~/.zshrc
 
 # Now use: vpn user list
@@ -78,10 +78,10 @@ nano ~/.capybara_config.yaml
 
 ```yaml
 server:
-  host: 66.42.119.38
+  host: YOUR_SERVER_IP
   port: 22
   username: root
-  password: H7)a4(72PGSnN4Hh
+  password: YOUR_SERVER_PASSWORD
   # Or use SSH key:
   # key_file: /path/to/private_key
 
@@ -116,10 +116,10 @@ vpn:
 ✓ User 'alice' added successfully!
 IP Address: 10.7.0.2
 Public Key: kkFtFxmLRVNguNO/xx9avIaK5p8cmVEsYiBD1HhZBzQ=
-Client config saved to: /Users/pasha/PycharmProjects/o/vpn_clients/alice_20250106_123456.conf
+Client config saved to: /path/to/vpn_clients/alice_20250106_123456.conf
 
 Client Setup Instructions:
-1. Run udp2raw client: ./udp2raw -c -l 127.0.0.1:4096 -r 66.42.119.38:443 -k SecureVPN2025Obfuscate...
+1. Run udp2raw client: ./udp2raw -c -l 127.0.0.1:4096 -r YOUR_SERVER_IP:443 -k YOUR_UDP2RAW_PASSWORD...
 2. Import alice_20250106_123456.conf into WireGuard app
 3. Connect!
 ```
@@ -222,7 +222,7 @@ Real-time monitoring with auto-refresh:
 VPN Server Live Monitor (Updates every 5s)
 ============================================================
 
-Server: 66.42.119.38
+Server: YOUR_SERVER_IP
 Uptime: up 2 days, 5 hours, 30 minutes
 Total Users: 5 | Active: 3
 
@@ -285,7 +285,7 @@ VPN Server Status
 Overall Status:      RUNNING
 WireGuard:           Running
 udp2raw:             Running
-Server:              66.42.119.38
+Server:              YOUR_SERVER_IP
 Interface:           wg0
 Uptime:              up 2 days, 5 hours, 30 minutes
 ```
@@ -481,12 +481,12 @@ Edit `~/.capybara_config.yaml`:
 
 ```yaml
 server:
-  host: 66.42.119.38
+  host: YOUR_SERVER_IP
   port: 22
   username: root
-  key_file: /Users/pasha/.ssh/vpn_server_key
+  key_file: /path/to/.ssh/vpn_server_key
   # Remove or comment out password:
-  # password: H7)a4(72PGSnN4Hh
+  # password: YOUR_SERVER_PASSWORD
 ```
 
 ### Automation with Cron
@@ -498,7 +498,7 @@ Monitor and send daily reports:
 crontab -e
 
 # Daily stats report at 9 AM
-0 9 * * * /usr/bin/python3 /Users/pasha/PycharmProjects/o/capybara.py user list > /tmp/vpn_daily_report.txt && mail -s "VPN Daily Report" you@example.com < /tmp/vpn_daily_report.txt
+0 9 * * * /usr/bin/python3 /path/to/capybara.py user list > /tmp/vpn_daily_report.txt && mail -s "VPN Daily Report" you@example.com < /tmp/vpn_daily_report.txt
 ```
 
 ### Scripting
@@ -527,7 +527,7 @@ print(result.stdout)
 **Solution:**
 1. Check server is accessible:
    ```bash
-   ssh root@66.42.119.38
+   ssh root@YOUR_SERVER_IP
    ```
 
 2. Verify credentials in config:

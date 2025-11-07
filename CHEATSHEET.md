@@ -12,7 +12,7 @@ pip3 install -r requirements.txt
 chmod +x capybara.py
 
 # Create alias (optional)
-alias vpn="python3 /Users/pasha/PycharmProjects/o/capybara.py"
+alias vpn="python3 /path/to/capybara.py"
 ```
 
 ## User Commands
@@ -226,7 +226,7 @@ VPN Server Status
 Overall Status:      RUNNING
 WireGuard:           Running
 udp2raw:             Running
-Server:              66.42.119.38
+Server:              YOUR_SERVER_IP
 Interface:           wg0
 Uptime:              up 2 days, 5 hours
 ```
@@ -258,7 +258,7 @@ interface: wg0
 VPN Server Live Monitor (Updates every 5s)
 ============================================================
 
-Server: 66.42.119.38
+Server: YOUR_SERVER_IP
 Uptime: up 2 days, 5 hours
 Total Users: 5 | Active: 3
 
@@ -275,7 +275,7 @@ Press Ctrl+C to exit
 ### "Failed to connect to server"
 ```bash
 # Check SSH access
-ssh root@66.42.119.38
+ssh root@YOUR_SERVER_IP
 
 # Verify config
 ./capybara.py config
@@ -378,7 +378,7 @@ tmux attach -t vpn-monitor
 
 ```yaml
 server:
-  host: 66.42.119.38
+  host: YOUR_SERVER_IP
   port: 22
   username: root
   password: your_password

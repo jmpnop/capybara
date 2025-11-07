@@ -5,7 +5,7 @@ Complete step-by-step guide for setting up a WireGuard VPN server on Alpine Linu
 ## Server Information
 - **Provider**: Vultr.com
 - **OS**: Alpine Linux v3.22
-- **Server IP**: 66.42.119.38
+- **Server IP**: YOUR_SERVER_IP
 - **VPN Network**: 10.7.0.0/24
 - **Obfuscation Port**: 443 (UDP disguised as TCP)
 - **WireGuard Port**: 51820 (localhost only)
@@ -20,7 +20,7 @@ Complete step-by-step guide for setting up a WireGuard VPN server on Alpine Linu
 ## Step 1: Connect and Verify System
 
 ```bash
-ssh root@66.42.119.38
+ssh root@YOUR_SERVER_IP
 uname -a
 cat /etc/os-release
 ```
@@ -107,7 +107,7 @@ ListenPort = 51820
 MTU = 1280
 
 # udp2raw obfuscation (faketcp mode)
-PreUp = /usr/local/bin/udp2raw -s -l 0.0.0.0:443 -r 127.0.0.1:51820 -k SecureVPN2025Obfuscate --raw-mode faketcp --cipher-mode xor --auth-mode hmac_sha1 -a --fix-gro >/var/log/udp2raw.log 2>&1 &
+PreUp = /usr/local/bin/udp2raw -s -l 0.0.0.0:443 -r 127.0.0.1:51820 -k YOUR_UDP2RAW_PASSWORD --raw-mode faketcp --cipher-mode xor --auth-mode hmac_sha1 -a --fix-gro >/var/log/udp2raw.log 2>&1 &
 PostDown = killall udp2raw || true
 
 # Enable NAT for clients
@@ -129,7 +129,7 @@ chmod 600 /etc/wireguard/wg0.conf
 **Important Notes**:
 - Replace `PrivateKey` with your generated server private key
 - Replace `eth0` with your actual internet interface name
-- Password `SecureVPN2025Obfuscate` must match on client and server
+- Password `YOUR_UDP2RAW_PASSWORD` must match on client and server
 - Port 443 is used to mimic HTTPS traffic (helps bypass DPI)
 
 ---
@@ -229,7 +229,7 @@ reboot
 
 Wait 30-60 seconds, then reconnect:
 ```bash
-ssh root@66.42.119.38
+ssh root@YOUR_SERVER_IP
 ```
 
 ### 8.6 Load Required Kernel Modules
@@ -365,7 +365,7 @@ chmod +x udp2raw_mac_amd64  # or udp2raw_mac_arm64
 
 Open a terminal and run:
 ```bash
-./udp2raw_mac_amd64 -c -l 127.0.0.1:4096 -r 66.42.119.38:443 -k SecureVPN2025Obfuscate --raw-mode faketcp --cipher-mode xor --auth-mode hmac_sha1 -a --fix-gro
+./udp2raw_mac_amd64 -c -l 127.0.0.1:4096 -r YOUR_SERVER_IP:443 -k YOUR_UDP2RAW_PASSWORD --raw-mode faketcp --cipher-mode xor --auth-mode hmac_sha1 -a --fix-gro
 ```
 
 **Important**: Keep this terminal window open while using the VPN.
@@ -416,13 +416,13 @@ For each new client, repeat this process:
 ### 1. Generate New Client Keys
 
 ```bash
-ssh root@66.42.119.38 "cd /etc/wireguard && wg genkey | tee client2_private.key | wg pubkey > client2_public.key && cat client2_private.key && cat client2_public.key"
+ssh root@YOUR_SERVER_IP "cd /etc/wireguard && wg genkey | tee client2_private.key | wg pubkey > client2_public.key && cat client2_private.key && cat client2_public.key"
 ```
 
 ### 2. Add Peer to Server
 
 ```bash
-ssh root@66.42.119.38 "cat >> /etc/wireguard/wg0.conf << 'EOF'
+ssh root@YOUR_SERVER_IP "cat >> /etc/wireguard/wg0.conf << 'EOF'
 
 [Peer]
 PublicKey = <client2_public_key>
@@ -450,32 +450,32 @@ Same as above, but with:
 ### Check WireGuard Status
 
 ```bash
-ssh root@66.42.119.38 "wg show"
+ssh root@YOUR_SERVER_IP "wg show"
 ```
 
 ### Check udp2raw Process
 
 ```bash
-ssh root@66.42.119.38 "ps aux | grep udp2raw | grep -v grep"
+ssh root@YOUR_SERVER_IP "ps aux | grep udp2raw | grep -v grep"
 ```
 
 ### View udp2raw Logs
 
 ```bash
-ssh root@66.42.119.38 "tail -f /var/log/udp2raw.log"
+ssh root@YOUR_SERVER_IP "tail -f /var/log/udp2raw.log"
 ```
 
 ### Check Active Connections
 
 ```bash
-ssh root@66.42.119.38 "wg show wg0 endpoints"
-ssh root@66.42.119.38 "wg show wg0 transfer"
+ssh root@YOUR_SERVER_IP "wg show wg0 endpoints"
+ssh root@YOUR_SERVER_IP "wg show wg0 transfer"
 ```
 
 ### Verify Listening Ports
 
 ```bash
-ssh root@66.42.119.38 "netstat -ulnp | grep -E '443|51820'"
+ssh root@YOUR_SERVER_IP "netstat -ulnp | grep -E '443|51820'"
 ```
 
 Expected:
@@ -485,8 +485,8 @@ Expected:
 ### Check Firewall Rules
 
 ```bash
-ssh root@66.42.119.38 "iptables -L -n -v"
-ssh root@66.42.119.38 "iptables -t nat -L -n -v"
+ssh root@YOUR_SERVER_IP "iptables -L -n -v"
+ssh root@YOUR_SERVER_IP "iptables -t nat -L -n -v"
 ```
 
 ---
@@ -541,14 +541,14 @@ ssh root@66.42.119.38 "iptables -t nat -L -n -v"
 
 2. Check server load:
    ```bash
-   ssh root@66.42.119.38 "top -bn1 | head -20"
+   ssh root@YOUR_SERVER_IP "top -bn1 | head -20"
    ```
 
 ---
 
 ## Security Considerations
 
-1. **Change the obfuscation password**: Replace `SecureVPN2025Obfuscate` with a strong, unique password
+1. **Change the obfuscation password**: Replace `YOUR_UDP2RAW_PASSWORD` with a strong, unique password
 2. **Rotate keys regularly**: Generate new server/client keys periodically
 3. **Monitor connections**: Regularly check `wg show` for unauthorized peers
 4. **Firewall**: The awall configuration provides good default security
@@ -576,14 +576,14 @@ ssh root@66.42.119.38 "iptables -t nat -L -n -v"
 ## Server Credentials Summary
 
 **Server Access**:
-- Email: polikashin@gmail.com
-- Password: myhdos-sywsox-6dojmU
-- Root Password: H7)a4(72PGSnN4Hh
-- IP: 66.42.119.38
+- Email: admin@example.com
+- Password: YOUR_PROVIDER_PASSWORD
+- Root Password: YOUR_SERVER_PASSWORD
+- IP: YOUR_SERVER_IP
 
 **VPN Configuration**:
 - Server Public Key: `D1m+SC4pa0UDNLXcKb/+cWO1rMXgvEQYl1CZlEFD/1A=`
-- Obfuscation Password: `SecureVPN2025Obfuscate`
+- Obfuscation Password: `YOUR_UDP2RAW_PASSWORD`
 - VPN Network: 10.7.0.0/24
 - Server VPN IP: 10.7.0.1
 - Client 1 VPN IP: 10.7.0.2
@@ -594,27 +594,27 @@ ssh root@66.42.119.38 "iptables -t nat -L -n -v"
 
 ### Restart WireGuard
 ```bash
-ssh root@66.42.119.38 "wg-quick down wg0 && wg-quick up wg0"
+ssh root@YOUR_SERVER_IP "wg-quick down wg0 && wg-quick up wg0"
 ```
 
 ### Add New Client (Complete Process)
 ```bash
 # Generate keys
-ssh root@66.42.119.38 "cd /etc/wireguard && wg genkey | tee client_new_private.key | wg pubkey > client_new_public.key && echo 'Private:' && cat client_new_private.key && echo 'Public:' && cat client_new_public.key"
+ssh root@YOUR_SERVER_IP "cd /etc/wireguard && wg genkey | tee client_new_private.key | wg pubkey > client_new_public.key && echo 'Private:' && cat client_new_private.key && echo 'Public:' && cat client_new_public.key"
 
 # Add to server (replace PUBLIC_KEY and IP)
-ssh root@66.42.119.38 "echo -e '\n[Peer]\nPublicKey = PUBLIC_KEY\nAllowedIPs = 10.7.0.X/32' >> /etc/wireguard/wg0.conf && wg syncconf wg0 <(wg-quick strip wg0)"
+ssh root@YOUR_SERVER_IP "echo -e '\n[Peer]\nPublicKey = PUBLIC_KEY\nAllowedIPs = 10.7.0.X/32' >> /etc/wireguard/wg0.conf && wg syncconf wg0 <(wg-quick strip wg0)"
 ```
 
 ### Remove Client
 ```bash
 # Remove from config file manually, then:
-ssh root@66.42.119.38 "wg syncconf wg0 <(wg-quick strip wg0)"
+ssh root@YOUR_SERVER_IP "wg syncconf wg0 <(wg-quick strip wg0)"
 ```
 
 ### View All Peers
 ```bash
-ssh root@66.42.119.38 "wg show wg0 peers"
+ssh root@YOUR_SERVER_IP "wg show wg0 peers"
 ```
 
 ---

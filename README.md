@@ -48,9 +48,18 @@ chmod +x install_multi_vpn_server.sh
 - Installs Shadowsocks with AEAD encryption
 - Installs V2Ray with VMess protocol
 - Configures firewall for all protocols (awall)
+- **Enables DNS resolution and proper NAT** for all protocols
 - Generates server keys
 - Sets up automatic startup
 - Configures ports: 443 (WireGuard/udp2raw), 8388 (Shadowsocks), 8443 (V2Ray)
+
+**Already have WireGuard installed?** Add Shadowsocks + V2Ray to your existing server:
+```bash
+wget https://raw.githubusercontent.com/jmpnop/capybara/main/install_shadowsocks_v2ray_only.sh
+chmod +x install_shadowsocks_v2ray_only.sh
+./install_shadowsocks_v2ray_only.sh
+```
+This script adds Shadowsocks and V2Ray with all critical DNS/NAT fixes.
 
 **Option B: WireGuard Only**
 
@@ -191,7 +200,7 @@ After completing both Part 1 (Server Installation) and Part 2 (Management Tool I
 Add to your `~/.zshrc` or `~/.bashrc`:
 
 ```bash
-alias vpn="python3 /Users/pasha/PycharmProjects/o/capybara.py"
+alias vpn="python3 /path/to/capybara.py"
 ```
 
 Then use:
@@ -378,6 +387,7 @@ capybara.py config                        # Show config
 
 ### Troubleshooting
 
+#### Quick Commands
 ```bash
 # Check server status
 ./capybara.py server status
@@ -385,9 +395,82 @@ capybara.py config                        # Show config
 # View detailed user info
 ./capybara.py user list --detailed
 
+# View logs for all protocols
+./capybara.py logs show --service wireguard
+./capybara.py logs show --service shadowsocks
+./capybara.py logs show --service v2ray
+
 # Restart server if needed
 ./capybara.py server restart
 ```
+
+#### Common Issues
+
+**🚨 VPN Connects But Websites Don't Load**
+
+This is the most common issue! Symptoms:
+- Client shows "connected" status
+- Traffic appears in server logs
+- But browsers timeout or show "can't resolve host"
+
+**Root Cause:** Server can't resolve DNS or NAT misconfigured
+
+**Fix:**
+```bash
+# 1. Test if server can resolve DNS
+ssh root@YOUR_SERVER "nslookup google.com"
+
+# If DNS fails, fix the firewall:
+ssh root@YOUR_SERVER << 'EOF'
+# Update firewall to allow outbound traffic
+cat > /etc/awall/optional/multi-vpn.json << 'EOFCONFIG'
+{
+  "policy": [
+    { "in": "internet", "action": "drop" },
+    { "out": "internet", "action": "accept" }
+  ],
+  "filter": [
+    {
+      "out": "internet",
+      "service": ["dns", "http", "https"],
+      "action": "accept"
+    }
+  ]
+}
+EOFCONFIG
+
+# Apply firewall changes
+awall activate -f
+
+# Add catchall NAT rule
+iptables -t nat -I POSTROUTING -o eth0 -j MASQUERADE
+rc-service iptables save
+EOF
+```
+
+**🔍 Protocol Not Working**
+
+Check which service is failing:
+```bash
+# Check all services
+ssh root@YOUR_SERVER << 'EOF'
+rc-service shadowsocks-rust status
+rc-service v2ray status
+netstat -tulpn | grep -E '8388|8443'
+EOF
+```
+
+**📱 Mobile Client Issues**
+
+For iPhone/Android:
+1. Delete old configs in Shadowrocket/v2rayNG
+2. Scan the latest QR code (check timestamp in filename)
+3. Make sure using the right protocol QR code
+4. Try different protocol if one doesn't work
+
+**📋 Detailed Debugging Guide**
+
+For comprehensive troubleshooting, see [DEBUGGING_GUIDE.md](DEBUGGING_GUIDE.md)
 
 ## Configuration
 
@@ -395,7 +478,7 @@ On first run, Capybara creates a configuration file at `~/.capybara_config.yaml`
 
 ```yaml
 server:
-  host: 66.42.119.38
+  host: YOUR_SERVER_IP
   port: 22
   username: root
   password: your_password
@@ -451,6 +534,11 @@ Previously named "vpn_manager", we renamed it to Capybara because:
 - 🎯 **Smart Routing** - Different protocols for different devices/networks
 - 📦 **Automated Installation** - One-command multi-protocol server setup
 - 🔧 **Flexible Configuration** - Per-protocol or unified user management
+- 🛠️ **Critical Fixes**:
+  - ✅ DNS Resolution - Server can now resolve domain names for VPN clients
+  - ✅ NAT Configuration - All protocols properly route traffic (not just WireGuard)
+  - ✅ Firewall Updates - Outbound DNS/HTTP/HTTPS enabled for proper functionality
+  - ✅ Shadowsocks Integration - Fixed binary paths and shared password configuration
 
 ### Version 2.0.0 (Full Featured)
 - ✨ **Logs Management** - View and follow logs in real-time
@@ -472,7 +560,7 @@ Previously named "vpn_manager", we renamed it to Capybara because:
 ## Server Credentials
 
 **Server Access:**
-- Server: 66.42.119.38
+- Server: YOUR_SERVER_IP
 - Config: `~/.capybara_config.yaml`
 
 ## Quick Tips

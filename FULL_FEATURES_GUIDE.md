@@ -598,25 +598,25 @@ charlie,10.7.0.4,Inactive,Never,0 B,0 B
 Add to crontab:
 ```bash
 # Daily backup at 2 AM
-0 2 * * * cd /Users/pasha/PycharmProjects/o && ./capybara.py backup create --name daily-$(date +\%Y\%m\%d)
+0 2 * * * cd /path/to && ./capybara.py backup create --name daily-$(date +\%Y\%m\%d)
 ```
 
 ### Daily Email Report
 ```bash
 # Daily report at 9 AM
-0 9 * * * cd /Users/pasha/PycharmProjects/o && ./capybara.py report generate > /tmp/vpn-report.txt && mail -s "VPN Daily Report" admin@example.com < /tmp/vpn-report.txt
+0 9 * * * cd /path/to && ./capybara.py report generate > /tmp/vpn-report.txt && mail -s "VPN Daily Report" admin@example.com < /tmp/vpn-report.txt
 ```
 
 ### Health Monitoring
 ```bash
 # Check health every hour
-0 * * * * cd /Users/pasha/PycharmProjects/o && ./capybara.py health check >> /var/log/vpn-health.log
+0 * * * * cd /path/to && ./capybara.py health check >> /var/log/vpn-health.log
 ```
 
 ### Log Rotation
 ```bash
 # Archive logs weekly
-0 0 * * 0 cd /Users/pasha/PycharmProjects/o && ./capybara.py logs show --lines 1000 > vpn-logs-$(date +\%Y\%m\%d).txt
+0 0 * * 0 cd /path/to && ./capybara.py logs show --lines 1000 > vpn-logs-$(date +\%Y\%m\%d).txt
 ```
 
 ---

@@ -98,8 +98,8 @@ pip3 install -r requirements.txt
    Setting up WireGuard for 'testwg'...
    ✓ WireGuard setup complete!
      IP Address: 10.7.0.4
-     Config: /Users/pasha/PycharmProjects/o/vpn_clients/testwg_20251106_124556_wireguard.conf
-     QR Code: /Users/pasha/PycharmProjects/o/vpn_clients/testwg_20251106_124556_wireguard_qr.png
+     Config: /path/to/vpn_clients/testwg_20251106_124556_wireguard.conf
+     QR Code: /path/to/vpn_clients/testwg_20251106_124556_wireguard_qr.png
    ```
 
    **Files generated:**
