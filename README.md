@@ -502,7 +502,6 @@ Edit with: `nano ~/.capybara_config.yaml`
 
 ## Why "Capybara"?
 
-Previously named "vpn_manager", we renamed it to Capybara because:
 - 🦫 Capybaras are friendly and approachable (like this CLI)
 - 🦫 They're great at socializing (like managing multiple VPN users)
 - 🦫 They're calm under pressure (like handling server management)
@@ -540,7 +539,6 @@ Previously named "vpn_manager", we renamed it to Capybara because:
 - ✨ **Reports & Analytics** - Generate reports in multiple formats
 
 ### Version 1.0.0 (Initial Release)
-- ✨ Renamed from vpn_manager to Capybara
 - ✨ Added `server stop` and `server start` commands
 - ✅ Full user management
 - ✅ Real-time monitoring
