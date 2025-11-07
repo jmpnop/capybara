@@ -147,26 +147,26 @@ Capybara supports three battle-tested protocols, each with unique strengths:
 
 ### 📊 Enterprise Management
 - **Real-Time Monitoring** - Live statistics dashboard with auto-refresh
-- **Connection Analytics** - Track data transfer, handshakes, and session duration
+- **Connection Analytics** - Track data transfer, handshakes, and session duration (WireGuard)
 - **Multi-Format Reports** - Generate usage reports in text, JSON, or CSV formats
 - **Health Monitoring** - CPU, memory, disk, and network metrics
-- **Service Orchestration** - Granular control over WireGuard, udp2raw, and firewall
+- **Service Orchestration** - Granular control over all protocols (WireGuard, Shadowsocks, V2Ray, udp2raw, firewall)
 - **Emergency Controls** - Instantly disconnect users or trigger emergency shutdown
 
 ### 🔧 Professional Operations
-- **Zero-Downtime Updates** - Restart individual services without disconnecting users
-- **Automated Backups** - One-command backup of all configurations and keys
+- **Zero-Downtime Updates** - Restart individual protocols without disconnecting users
+- **Automated Backups** - One-command backup of all protocol configurations and keys
 - **Disaster Recovery** - Complete restoration from backup archives
-- **Detailed Logging** - Service-specific logs with filtering and real-time tail
-- **Network Diagnostics** - Built-in ping, port scanning, and handshake verification
-- **QR Code Provisioning** - Automatic generation for instant mobile device setup
+- **Detailed Logging** - Protocol-specific logs for WireGuard, Shadowsocks, V2Ray with filtering and real-time tail
+- **Network Diagnostics** - Built-in ping and port scanning (all protocols), handshake verification (WireGuard)
+- **QR Code Provisioning** - Automatic generation for all three protocols for instant mobile setup
 
 ### 🧑‍💼 User Management
-- **Instant Provisioning** - Add users with automatic key generation and IP assignment
-- **Flexible Access Control** - Block/unblock users without server restart
-- **Connection Tracking** - Monitor active connections with endpoint information
-- **Domain/IP Blocking** - Filter specific resources at VPN level
-- **Detailed User Views** - See handshake status, data transfer, and last seen time
+- **Multi-Protocol Provisioning** - Add users once, get configs for all 3 protocols automatically
+- **Flexible Access Control** - Remove users from WireGuard and V2Ray (Shadowsocks uses shared password)
+- **Connection Tracking** - Monitor active WireGuard connections with endpoint information
+- **Domain/IP Blocking** - Filter specific resources at VPN level (WireGuard)
+- **Detailed User Views** - List users across protocols, see WireGuard handshake status and data transfer
 
 ## Basic Usage
 
