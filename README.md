@@ -10,7 +10,6 @@
 - **⚡ Automated Deployment** - One-command server setup on Alpine Linux
 - **🎛️ Advanced Management** - Professional CLI with 35+ commands for monitoring, analytics, and control
 - **📱 QR Code Provisioning** - Instant client configuration via QR codes for all protocols
-- **🌐 Bilingual Support** - Full documentation in English and Russian
 - **🔐 Unified Credentials** - Same user credentials work across all protocols
 
 Built for networks where standard VPNs fail. Designed for privacy professionals, journalists, and users in restrictive environments.
