@@ -1,5 +1,7 @@
 #!/bin/sh
 #
+# DEPRECATED: This script is deprecated. Use install_capybara.sh instead.
+#
 # Add Shadowsocks and V2Ray to existing WireGuard setup
 # Does NOT modify WireGuard configuration
 #
@@ -22,6 +24,28 @@ if [ "$(id -u)" -ne 0 ]; then
     log_error "Must be run as root"
     exit 1
 fi
+
+# Deprecation warning
+echo ""
+echo "${YELLOW}=============================================${NC}"
+echo "${YELLOW}  DEPRECATION NOTICE${NC}"
+echo "${YELLOW}=============================================${NC}"
+echo ""
+echo "${YELLOW}This script is deprecated.${NC}"
+echo "Please use the new unified installer:"
+echo ""
+echo "  ${CYAN}wget https://raw.githubusercontent.com/jmpnop/capybara/main/install_capybara.sh${NC}"
+echo "  ${CYAN}chmod +x install_capybara.sh${NC}"
+echo "  ${CYAN}./install_capybara.sh --shadowsocks --v2ray${NC}"
+echo ""
+echo "Benefits:"
+echo "  • Updated V2Ray config (port 80 with WebSocket for mobile)"
+echo "  • Better maintained unified codebase"
+echo "  • Same functionality"
+echo ""
+echo "This script will continue in 10 seconds... Press Ctrl+C to cancel"
+sleep 10
+echo ""
 
 log_info "Installing Shadowsocks and V2Ray..."
 

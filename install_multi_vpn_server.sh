@@ -1,5 +1,7 @@
 #!/bin/sh
 #
+# DEPRECATED: This script is deprecated. Use install_capybara.sh instead.
+#
 # Capybara - Multi-Protocol Censorship-Resistant VPN Server Installation
 # Installs WireGuard + Shadowsocks + V2Ray with unified management
 #
@@ -70,6 +72,30 @@ if [ ! -f /etc/alpine-release ]; then
     log_error "This script is designed for Alpine Linux"
     exit 1
 fi
+
+# Deprecation warning
+echo ""
+echo "${YELLOW}=============================================${NC}"
+echo "${YELLOW}  DEPRECATION NOTICE${NC}"
+echo "${YELLOW}=============================================${NC}"
+echo ""
+echo "${YELLOW}This script is deprecated.${NC}"
+echo "Please use the new unified installer instead:"
+echo ""
+echo "  ${CYAN}wget https://raw.githubusercontent.com/jmpnop/capybara/main/install_capybara.sh${NC}"
+echo "  ${CYAN}chmod +x install_capybara.sh${NC}"
+echo "  ${CYAN}./install_capybara.sh${NC}"
+echo ""
+echo "Benefits of the new installer:"
+echo "  • Modular installation (choose which protocols to install)"
+echo "  • Updated V2Ray config (port 80 with WebSocket for mobile networks)"
+echo "  • Less redundant code, better maintained"
+echo "  • Same functionality, better structure"
+echo ""
+echo "This script will continue in 10 seconds..."
+echo "${YELLOW}Press Ctrl+C to cancel${NC}"
+echo ""
+sleep 10
 
 log_info "Starting Capybara Multi-Protocol VPN Server installation..."
 log_info "Alpine Linux version: $(cat /etc/alpine-release)"

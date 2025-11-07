@@ -32,45 +32,39 @@ Capybaras are nature's most chill animals - calm, adaptable, and excellent at na
 
 ### Part 1: Server Installation (One Command!)
 
-**Option A: Multi-Protocol Setup (Recommended)**
+**Unified Installation Script** (Recommended)
 
-Set up all three protocols - WireGuard, Shadowsocks, and V2Ray with unified management:
+One script to install any combination of protocols:
 
 ```bash
 # On your Alpine Linux VPS, run:
-wget https://raw.githubusercontent.com/jmpnop/capybara/main/install_multi_vpn_server.sh
-chmod +x install_multi_vpn_server.sh
-./install_multi_vpn_server.sh
+wget https://raw.githubusercontent.com/jmpnop/capybara/main/install_capybara.sh
+chmod +x install_capybara.sh
+./install_capybara.sh              # Install all protocols (default)
 ```
 
-**What it does:**
-- Installs WireGuard + udp2raw (DPI evasion)
-- Installs Shadowsocks with AEAD encryption
-- Installs V2Ray with VMess protocol
+**Installation Options:**
+```bash
+./install_capybara.sh              # All protocols (WireGuard + Shadowsocks + V2Ray)
+./install_capybara.sh --wireguard  # WireGuard only
+./install_capybara.sh --shadowsocks --v2ray  # Add to existing WireGuard server
+./install_capybara.sh --help       # Show all options
+```
+
+**What it installs:**
+- WireGuard + udp2raw (Port 443 - HTTPS disguise, DPI evasion)
+- Shadowsocks (Port 8388 - AEAD encryption, mobile-friendly)
+- V2Ray + WebSocket (Port 80 - HTTP disguise, mobile networks)
 - Configures firewall for all protocols (awall)
 - **Enables DNS resolution and proper NAT** for all protocols
 - Generates server keys
 - Sets up automatic startup
-- Configures ports: 443 (WireGuard/udp2raw), 8388 (Shadowsocks), 80 (V2Ray WebSocket)
 
-**Already have WireGuard installed?** Add Shadowsocks + V2Ray to your existing server:
-```bash
-wget https://raw.githubusercontent.com/jmpnop/capybara/main/install_shadowsocks_v2ray_only.sh
-chmod +x install_shadowsocks_v2ray_only.sh
-./install_shadowsocks_v2ray_only.sh
-```
-This script adds Shadowsocks and V2Ray with all critical DNS/NAT fixes.
-
-**Option B: WireGuard Only**
-
-For WireGuard-only setup:
-
-```bash
-# On your Alpine Linux VPS, run:
-wget https://raw.githubusercontent.com/jmpnop/capybara/main/install_vpn_server.sh
-chmod +x install_vpn_server.sh
-./install_vpn_server.sh
-```
+**Features:**
+- ✅ Modular installation (choose which protocols you need)
+- ✅ Updated V2Ray config (WebSocket on port 80 for mobile networks)
+- ✅ Eliminates redundancy between old scripts
+- ✅ Better error handling and logging
 
 **Supported:** Alpine Linux 3.20+
 
@@ -214,9 +208,10 @@ vpn server status
 ## Documentation
 
 ### Server Setup
-- **[install_multi_vpn_server.sh](install_multi_vpn_server.sh)** - 🔧 Multi-protocol automated installation
-- **[install_vpn_server.sh](install_vpn_server.sh)** - 🔧 WireGuard-only installation
+- **[install_capybara.sh](install_capybara.sh)** - 🔧 Unified modular installer (recommended)
 - **[VPN Server Setup Guide](CLAUDE.md)** - Manual step-by-step server setup
+- [install_multi_vpn_server.sh](install_multi_vpn_server.sh) - ⚠️ Deprecated (use install_capybara.sh)
+- [install_vpn_server.sh](install_vpn_server.sh) - ⚠️ Deprecated (use install_capybara.sh --wireguard)
 
 ### Client Setup (For End Users)
 - **[Client Setup Guide](CLIENT_SETUP.md)** - ⭐ Complete guide for all devices (macOS, iOS, Android)

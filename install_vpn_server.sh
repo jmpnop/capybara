@@ -58,6 +58,26 @@ if [ "$(id -u)" -ne 0 ]; then
 fi
 
 # Check if running on Alpine Linux
+
+# Deprecation warning
+echo ""
+echo "${YELLOW}=============================================${NC}"
+echo "${YELLOW}  DEPRECATION NOTICE${NC}"
+echo "${YELLOW}=============================================${NC}"
+echo ""
+echo "${YELLOW}This script is deprecated.${NC}"
+echo "Please use the new unified installer:"
+echo ""
+echo "  ${CYAN}wget https://raw.githubusercontent.com/jmpnop/capybara/main/install_capybara.sh${NC}"
+echo "  ${CYAN}chmod +x install_capybara.sh${NC}"
+echo ""
+echo "For WireGuard only:     ${CYAN}./install_capybara.sh --wireguard${NC}"
+echo "For Shadowsocks+V2Ray:  ${CYAN}./install_capybara.sh --shadowsocks --v2ray${NC}"
+echo ""
+echo "This script will continue in 10 seconds... Press Ctrl+C to cancel"
+sleep 10
+echo ""
+
 if [ ! -f /etc/alpine-release ]; then
     log_error "This script is designed for Alpine Linux"
     exit 1
