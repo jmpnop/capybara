@@ -175,8 +175,8 @@ class VPNManager:
         return ss_url
 
     def create_v2ray_qr(self, uuid_str, server, port, alterId=0):
-        """Create V2Ray VMess QR code"""
-        # VMess format
+        """Create V2Ray VMess QR code with WebSocket transport"""
+        # VMess format with WebSocket
         vmess_config = {
             "v": "2",
             "ps": f"Capybara-{server}",
@@ -184,10 +184,10 @@ class VPNManager:
             "port": str(port),
             "id": uuid_str,
             "aid": str(alterId),
-            "net": "tcp",
+            "net": "ws",
             "type": "none",
             "host": "",
-            "path": "",
+            "path": "/api/v2/download",
             "tls": ""
         }
         json_str = json.dumps(vmess_config)
@@ -429,7 +429,7 @@ Mobile App Setup:
                 click.echo(f"{Fore.YELLOW}Setting up V2Ray for '{username}'...")
 
                 v2ray_uuid = self.generate_v2ray_uuid(username)
-                v2ray_port = 8443
+                v2ray_port = 80
 
                 # Add user to V2Ray
                 self.add_v2ray_user(ssh, username, v2ray_uuid)
@@ -444,7 +444,8 @@ Server: {server_ip}
 Port: {v2ray_port}
 UUID: {v2ray_uuid}
 AlterID: 0
-Network: tcp
+Network: ws (WebSocket)
+Path: /api/v2/download
 Type: none
 
 Connection URL:
@@ -454,6 +455,8 @@ Mobile App Setup:
 1. Install V2Ray client (iOS: Shadowrocket/Kitsunebi, Android: v2rayNG)
 2. Scan QR code or manually enter details above
 3. Connect!
+
+Note: Uses WebSocket on port 80 for mobile network compatibility
 """
                 v2ray_config_file = client_dir / f"{username}_{timestamp}_v2ray.txt"
                 v2ray_config_file.write_text(v2ray_config_content)

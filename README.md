@@ -586,10 +586,10 @@ Previously named "vpn_manager", we renamed it to Capybara because:
 | Protocol | Code | Installation Script | Testing | Status |
 |----------|------|-------------------|---------|--------|
 | WireGuard + udp2raw | ✅ Complete | ✅ Complete | ✅ Tested | 🟢 Production Ready |
-| Shadowsocks | ✅ Complete | ✅ Complete | 📦 Ready | 🟡 Code Complete |
-| V2Ray | ✅ Complete | ✅ Complete | 📦 Ready | 🟡 Code Complete |
+| Shadowsocks | ✅ Complete | ✅ Complete | ✅ Tested | 🟢 Production Ready |
+| V2Ray | ✅ Complete | ✅ Complete | ✅ Tested | 🟢 Production Ready |
 
-**Note:** WireGuard is fully tested and operational. Shadowsocks and V2Ray implementation is complete and ready for deployment - install scripts are prepared and CLI supports all three protocols.
+**All three protocols are production-ready.** The CLI automatically generates configs and QR codes for WireGuard, Shadowsocks, and V2Ray when adding users.
 
 ---
 
