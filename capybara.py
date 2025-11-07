@@ -935,26 +935,62 @@ Note: Uses WebSocket on port 80 for mobile network compatibility
             return blocks
 
     def stop_server(self):
-        """Stop WireGuard server"""
+        """Stop ALL VPN protocols (WireGuard, Shadowsocks, V2Ray)"""
         with SSHConnection(self.config) as ssh:
-            click.echo(f"{Fore.YELLOW}Stopping WireGuard...")
-            ssh.execute(f"wg-quick down {self.config['vpn']['interface']}")
-            click.echo(f"{Fore.GREEN}✓ WireGuard stopped successfully")
+            click.echo(f"{Fore.YELLOW}Stopping VPN server (all protocols)...")
+
+            # Stop WireGuard (includes udp2raw via PostDown)
+            ssh.execute(f"wg-quick down {self.config['vpn']['interface']}", check_error=False)
+            click.echo(f"{Fore.GREEN}  ✓ WireGuard stopped")
+
+            # Stop Shadowsocks
+            ssh.execute("rc-service shadowsocks-rust stop", check_error=False)
+            click.echo(f"{Fore.GREEN}  ✓ Shadowsocks stopped")
+
+            # Stop V2Ray
+            ssh.execute("rc-service v2ray stop", check_error=False)
+            click.echo(f"{Fore.GREEN}  ✓ V2Ray stopped")
+
+            click.echo(f"{Fore.GREEN}✓ VPN server stopped successfully")
 
     def start_server(self):
-        """Start WireGuard server"""
+        """Start ALL VPN protocols (WireGuard, Shadowsocks, V2Ray)"""
         with SSHConnection(self.config) as ssh:
-            click.echo(f"{Fore.YELLOW}Starting WireGuard...")
-            ssh.execute(f"wg-quick up {self.config['vpn']['interface']}")
-            click.echo(f"{Fore.GREEN}✓ WireGuard started successfully")
+            click.echo(f"{Fore.YELLOW}Starting VPN server (all protocols)...")
+
+            # Start WireGuard (includes udp2raw via PreUp)
+            ssh.execute(f"wg-quick up {self.config['vpn']['interface']}", check_error=False)
+            click.echo(f"{Fore.GREEN}  ✓ WireGuard started")
+
+            # Start Shadowsocks
+            ssh.execute("rc-service shadowsocks-rust start", check_error=False)
+            click.echo(f"{Fore.GREEN}  ✓ Shadowsocks started")
+
+            # Start V2Ray
+            ssh.execute("rc-service v2ray start", check_error=False)
+            click.echo(f"{Fore.GREEN}  ✓ V2Ray started")
+
+            click.echo(f"{Fore.GREEN}✓ VPN server started successfully")
 
     def restart_server(self):
-        """Restart WireGuard server"""
+        """Restart ALL VPN protocols (WireGuard, Shadowsocks, V2Ray)"""
         with SSHConnection(self.config) as ssh:
-            click.echo(f"{Fore.YELLOW}Restarting WireGuard...")
-            ssh.execute(f"wg-quick down {self.config['vpn']['interface']}")
-            ssh.execute(f"wg-quick up {self.config['vpn']['interface']}")
-            click.echo(f"{Fore.GREEN}✓ WireGuard restarted successfully")
+            click.echo(f"{Fore.YELLOW}Restarting VPN server (all protocols)...")
+
+            # Restart WireGuard (includes udp2raw)
+            ssh.execute(f"wg-quick down {self.config['vpn']['interface']}", check_error=False)
+            ssh.execute(f"wg-quick up {self.config['vpn']['interface']}", check_error=False)
+            click.echo(f"{Fore.GREEN}  ✓ WireGuard restarted")
+
+            # Restart Shadowsocks
+            ssh.execute("rc-service shadowsocks-rust restart", check_error=False)
+            click.echo(f"{Fore.GREEN}  ✓ Shadowsocks restarted")
+
+            # Restart V2Ray
+            ssh.execute("rc-service v2ray restart", check_error=False)
+            click.echo(f"{Fore.GREEN}  ✓ V2Ray restarted")
+
+            click.echo(f"{Fore.GREEN}✓ VPN server restarted successfully")
 
     # ===== LOGS MANAGEMENT =====
     def view_logs(self, service='all', lines=50, follow=False):
@@ -1107,6 +1143,48 @@ Note: Uses WebSocket on port 80 for mobile network compatibility
             return count
 
     # ===== SERVICE MANAGEMENT =====
+    def start_service(self, service):
+        """Start individual service"""
+        with SSHConnection(self.config) as ssh:
+            click.echo(f"{Fore.YELLOW}Starting {service}...")
+
+            if service == 'wireguard':
+                ssh.execute(f"wg-quick up {self.config['vpn']['interface']}")
+            elif service == 'udp2raw':
+                # udp2raw starts automatically with WireGuard (PreUp)
+                ssh.execute(f"wg-quick up {self.config['vpn']['interface']}")
+            elif service == 'shadowsocks':
+                ssh.execute("rc-service shadowsocks-rust start")
+            elif service == 'v2ray':
+                ssh.execute("rc-service v2ray start")
+            elif service == 'firewall':
+                ssh.execute("rc-service iptables start")
+            else:
+                raise Exception(f"Unknown service: {service}")
+
+            click.echo(f"{Fore.GREEN}✓ {service} started successfully")
+
+    def stop_service(self, service):
+        """Stop individual service"""
+        with SSHConnection(self.config) as ssh:
+            click.echo(f"{Fore.YELLOW}Stopping {service}...")
+
+            if service == 'wireguard':
+                ssh.execute(f"wg-quick down {self.config['vpn']['interface']}")
+            elif service == 'udp2raw':
+                # udp2raw stops automatically with WireGuard (PostDown)
+                ssh.execute("killall udp2raw || true")
+            elif service == 'shadowsocks':
+                ssh.execute("rc-service shadowsocks-rust stop")
+            elif service == 'v2ray':
+                ssh.execute("rc-service v2ray stop")
+            elif service == 'firewall':
+                ssh.execute("rc-service iptables stop")
+            else:
+                raise Exception(f"Unknown service: {service}")
+
+            click.echo(f"{Fore.GREEN}✓ {service} stopped successfully")
+
     def restart_service(self, service):
         """Restart individual service"""
         with SSHConnection(self.config) as ssh:
@@ -1865,13 +1943,16 @@ def block_list():
 @cli.group()
 def server():
     """
-    Manage VPN server (start, stop, restart, status).
+    Manage entire VPN server (ALL protocols: WireGuard, Shadowsocks, V2Ray).
+
+    Server commands control all protocols at once. For individual protocol
+    control, use the 'service' command instead.
 
     Examples:
-      capybara.py server status               # Check server status
-      capybara.py server stop                 # Stop VPN server
-      capybara.py server start                # Start VPN server
-      capybara.py server restart              # Restart VPN server
+      capybara.py server status               # Check all protocols status
+      capybara.py server start                # Start ALL protocols
+      capybara.py server stop                 # Stop ALL protocols
+      capybara.py server restart              # Restart ALL protocols
     """
     pass
 
@@ -1955,9 +2036,9 @@ def server_status():
 
 
 @server.command('stop')
-@click.confirmation_option(prompt='Are you sure you want to stop the VPN server?')
+@click.confirmation_option(prompt='Are you sure you want to stop ALL VPN protocols?')
 def server_stop():
-    """Stop the VPN server"""
+    """Stop ALL VPN protocols (WireGuard, Shadowsocks, V2Ray)"""
     config = load_config()
     manager = VPNManager(config)
 
@@ -1970,7 +2051,7 @@ def server_stop():
 
 @server.command('start')
 def server_start():
-    """Start the VPN server"""
+    """Start ALL VPN protocols (WireGuard, Shadowsocks, V2Ray)"""
     config = load_config()
     manager = VPNManager(config)
 
@@ -1982,9 +2063,9 @@ def server_start():
 
 
 @server.command('restart')
-@click.confirmation_option(prompt='Are you sure you want to restart the VPN server?')
+@click.confirmation_option(prompt='Are you sure you want to restart ALL VPN protocols?')
 def server_restart():
-    """Restart the VPN server"""
+    """Restart ALL VPN protocols (WireGuard, Shadowsocks, V2Ray)"""
     config = load_config()
     manager = VPNManager(config)
 
@@ -2143,15 +2224,17 @@ def connection_kick_all():
 @cli.group()
 def service():
     """
-    Manage individual services (all protocols).
+    Manage individual protocol services (fine-grained control).
+
+    Use 'service' commands to control ONE protocol at a time.
+    For bulk operations (all protocols), use 'server' command instead.
 
     Examples:
-      capybara.py service status                  # Check all services
-      capybara.py service restart wireguard       # Restart WireGuard only
+      capybara.py service status                  # Check all services status
+      capybara.py service start wireguard         # Start WireGuard only
+      capybara.py service start shadowsocks       # Start Shadowsocks only
+      capybara.py service stop v2ray              # Stop V2Ray only
       capybara.py service restart shadowsocks     # Restart Shadowsocks only
-      capybara.py service restart v2ray           # Restart V2Ray only
-      capybara.py service restart udp2raw         # Restart udp2raw only
-      capybara.py service restart firewall        # Restart firewall only
     """
     pass
 
@@ -2175,6 +2258,35 @@ def service_status_cmd():
 
     except Exception as e:
         click.echo(f"{Fore.RED}Error checking service status: {e}")
+        sys.exit(1)
+
+
+@service.command('start')
+@click.argument('service_name', type=click.Choice(['wireguard', 'udp2raw', 'shadowsocks', 'v2ray', 'firewall']))
+def service_start_cmd(service_name):
+    """Start a specific service"""
+    config = load_config()
+    manager = VPNManager(config)
+
+    try:
+        manager.start_service(service_name)
+    except Exception as e:
+        click.echo(f"{Fore.RED}Error starting service: {e}")
+        sys.exit(1)
+
+
+@service.command('stop')
+@click.argument('service_name', type=click.Choice(['wireguard', 'udp2raw', 'shadowsocks', 'v2ray', 'firewall']))
+@click.confirmation_option(prompt='Are you sure you want to stop this service?')
+def service_stop_cmd(service_name):
+    """Stop a specific service"""
+    config = load_config()
+    manager = VPNManager(config)
+
+    try:
+        manager.stop_service(service_name)
+    except Exception as e:
+        click.echo(f"{Fore.RED}Error stopping service: {e}")
         sys.exit(1)
 
 
