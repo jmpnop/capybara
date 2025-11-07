@@ -1159,6 +1159,91 @@ Note: Uses WebSocket on port 80 for mobile network compatibility
 
             return status
 
+    def get_protocol_configs(self):
+        """Get configuration details for all protocols"""
+        with SSHConnection(self.config) as ssh:
+            configs = {}
+
+            # ========== WireGuard Configuration ==========
+            try:
+                # Get WireGuard listen port
+                wg_config, _, _ = ssh.execute(f"cat {self.config['vpn']['config_path']}")
+                wg_port = "51820"  # Default
+                for line in wg_config.split('\n'):
+                    if 'ListenPort' in line:
+                        wg_port = line.split('=')[1].strip()
+                        break
+
+                # Get udp2raw port from PreUp command
+                udp_port = "443"  # Default
+                for line in wg_config.split('\n'):
+                    if 'PreUp' in line and 'udp2raw' in line and '-l' in line:
+                        parts = line.split()
+                        for i, part in enumerate(parts):
+                            if part == '-l' and i + 1 < len(parts):
+                                addr_port = parts[i + 1]
+                                if ':' in addr_port:
+                                    udp_port = addr_port.split(':')[1]
+                                break
+                        break
+
+                configs['wireguard'] = {
+                    'interface': self.config['vpn']['interface'],
+                    'port': wg_port,
+                    'obfuscation_port': udp_port,
+                    'network': self.config['vpn']['network']
+                }
+            except Exception as e:
+                configs['wireguard'] = {'error': str(e)}
+
+            # ========== Shadowsocks Configuration ==========
+            try:
+                ss_config, _, _ = ssh.execute("cat /etc/shadowsocks-rust/config.json")
+                ss_data = json.loads(ss_config)
+
+                configs['shadowsocks'] = {
+                    'port': ss_data.get('server_port', 'N/A'),
+                    'method': ss_data.get('method', 'N/A'),
+                    'mode': ss_data.get('mode', 'N/A')
+                }
+            except Exception as e:
+                configs['shadowsocks'] = {'error': str(e)}
+
+            # ========== V2Ray Configuration ==========
+            try:
+                v2_config, _, _ = ssh.execute("cat /etc/v2ray/config.json")
+                v2_data = json.loads(v2_config)
+
+                if 'inbounds' in v2_data and len(v2_data['inbounds']) > 0:
+                    inbound = v2_data['inbounds'][0]
+                    ws_path = 'N/A'
+                    transport = 'N/A'
+
+                    if 'streamSettings' in inbound:
+                        stream = inbound['streamSettings']
+                        transport = stream.get('network', 'N/A')
+                        if 'wsSettings' in stream:
+                            ws_path = stream['wsSettings'].get('path', 'N/A')
+
+                    # Count users
+                    user_count = 0
+                    if 'settings' in inbound and 'clients' in inbound['settings']:
+                        user_count = len(inbound['settings']['clients'])
+
+                    configs['v2ray'] = {
+                        'port': inbound.get('port', 'N/A'),
+                        'protocol': inbound.get('protocol', 'N/A'),
+                        'transport': transport,
+                        'ws_path': ws_path,
+                        'users': user_count
+                    }
+                else:
+                    configs['v2ray'] = {'error': 'No inbounds configured'}
+            except Exception as e:
+                configs['v2ray'] = {'error': str(e)}
+
+            return configs
+
     # ===== BACKUP & RESTORE =====
     def create_backup(self, name=None):
         """Create backup of VPN configuration"""
@@ -1800,6 +1885,7 @@ def server_status():
     try:
         stats_data = manager.get_stats()
         service_status = manager.service_status()
+        protocol_configs = manager.get_protocol_configs()
 
         click.echo(f"\n{Fore.CYAN}{'='*60}")
         click.echo(f"{Fore.GREEN}VPN Server Status")
@@ -1821,9 +1907,46 @@ def server_status():
         click.echo(f"{Fore.YELLOW}udp2raw:             {Fore.GREEN + 'Running' if udp_running else Fore.RED + 'Stopped'}")
         click.echo(f"{Fore.YELLOW}Shadowsocks:         {Fore.GREEN + 'Running' if ss_running else Fore.RED + 'Stopped'}")
         click.echo(f"{Fore.YELLOW}V2Ray:               {Fore.GREEN + 'Running' if v2ray_running else Fore.RED + 'Stopped'}")
+
+        # ========== Protocol Configuration Details ==========
+        click.echo(f"\n{Fore.CYAN}Protocol Configuration:")
+
+        # WireGuard
+        wg_cfg = protocol_configs.get('wireguard', {})
+        if 'error' not in wg_cfg:
+            click.echo(f"\n{Fore.YELLOW}WireGuard:")
+            click.echo(f"  Interface:         {wg_cfg.get('interface', 'N/A')}")
+            click.echo(f"  Port:              {wg_cfg.get('port', 'N/A')} (internal)")
+            click.echo(f"  Obfuscation Port:  {wg_cfg.get('obfuscation_port', 'N/A')} (udp2raw → HTTPS)")
+            click.echo(f"  Network:           {wg_cfg.get('network', 'N/A')}")
+        else:
+            click.echo(f"\n{Fore.YELLOW}WireGuard: {Fore.RED}Config error")
+
+        # Shadowsocks
+        ss_cfg = protocol_configs.get('shadowsocks', {})
+        if 'error' not in ss_cfg:
+            click.echo(f"\n{Fore.YELLOW}Shadowsocks:")
+            click.echo(f"  Port:              {ss_cfg.get('port', 'N/A')}")
+            click.echo(f"  Method:            {ss_cfg.get('method', 'N/A')}")
+            click.echo(f"  Mode:              {ss_cfg.get('mode', 'N/A').replace('tcp_and_udp', 'TCP + UDP')}")
+        else:
+            click.echo(f"\n{Fore.YELLOW}Shadowsocks: {Fore.RED}Config error")
+
+        # V2Ray
+        v2_cfg = protocol_configs.get('v2ray', {})
+        if 'error' not in v2_cfg:
+            click.echo(f"\n{Fore.YELLOW}V2Ray:")
+            click.echo(f"  Port:              {v2_cfg.get('port', 'N/A')}")
+            click.echo(f"  Protocol:          {v2_cfg.get('protocol', 'N/A')}")
+            click.echo(f"  Transport:         {v2_cfg.get('transport', 'N/A')}")
+            click.echo(f"  WebSocket Path:    {v2_cfg.get('ws_path', 'N/A')}")
+            click.echo(f"  Configured Users:  {v2_cfg.get('users', 0)}")
+        else:
+            click.echo(f"\n{Fore.YELLOW}V2Ray: {Fore.RED}Config error")
+
+        # ========== General Server Info ==========
         click.echo(f"\n{Fore.CYAN}Server Information:")
-        click.echo(f"{Fore.YELLOW}Server:              {config['server']['host']}")
-        click.echo(f"{Fore.YELLOW}Interface:           {config['vpn']['interface']}")
+        click.echo(f"{Fore.YELLOW}Server IP:           {config['server']['host']}")
         click.echo(f"{Fore.YELLOW}Uptime:              {stats_data.get('uptime', 'N/A')}")
 
     except Exception as e:
