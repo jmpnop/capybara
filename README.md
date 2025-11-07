@@ -213,22 +213,16 @@ vpn server status
 ## Documentation
 
 ### Server Setup
-- **[install_vpn_server.sh](install_vpn_server.sh)** - 🔧 Automated server installation script
+- **[install_multi_vpn_server.sh](install_multi_vpn_server.sh)** - 🔧 Multi-protocol automated installation
+- **[install_vpn_server.sh](install_vpn_server.sh)** - 🔧 WireGuard-only installation
 - **[VPN Server Setup Guide](CLAUDE.md)** - Manual step-by-step server setup
 
-### Management Tool
-- **[Quick Start Guide](QUICK_START.md)** - Get up and running in 5 minutes
-- **[Full Features Guide](FULL_FEATURES_GUIDE.md)** - Complete guide for all features
-- **[Command Cheatsheet](CHEATSHEET.md)** - Quick reference for all commands
-- **[Complete Documentation](VPN_MANAGER_README.md)** - Full feature documentation
-
-### Client Setup
-- **[Client Setup Guide](CLIENT_SETUP.md)** - ⭐ Complete guide for macOS and iOS clients
+### Client Setup (For End Users)
+- **[Client Setup Guide](CLIENT_SETUP.md)** - ⭐ Complete guide for all devices (macOS, iOS, Android)
   - **[Russian version](CLIENT_SETUP_RU.md)** - 🇷🇺 Руководство на русском языке
 
-### Reference
-- **[Documentation Index](DOCUMENTATION_INDEX.md)** - Complete documentation catalog
-- **[Feature Ideas](FEATURE_IDEAS.md)** - Future enhancements and roadmap
+### Troubleshooting
+- **[Debugging Guide](DEBUGGING_GUIDE.md)** - 🔍 Comprehensive troubleshooting for all protocols
 
 ## Command Overview
 
@@ -521,8 +515,8 @@ Previously named "vpn_manager", we renamed it to Capybara because:
 ## Support
 
 - Run `./capybara.py --help` for command help
-- Check [VPN_MANAGER_README.md](VPN_MANAGER_README.md) for detailed docs
-- Review [CHEATSHEET.md](CHEATSHEET.md) for quick reference
+- Check [CLIENT_SETUP.md](CLIENT_SETUP.md) for client configuration
+- Review [DEBUGGING_GUIDE.md](DEBUGGING_GUIDE.md) for troubleshooting
 
 ## What's New
 
