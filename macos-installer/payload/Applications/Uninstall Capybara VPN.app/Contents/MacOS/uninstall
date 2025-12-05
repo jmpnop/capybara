@@ -39,19 +39,24 @@ return button returned of result
 APPLESCRIPT
 )
 
-# Ask about WireGuard
-REMOVE_WIREGUARD=$(osascript 2>/dev/null <<'APPLESCRIPT'
+# Ask about WireGuard (only if we installed it)
+WIREGUARD_INSTALLED_BY_US=false
+if [ -f "$APP_SUPPORT/.capybara_installed_wireguard" ]; then
+    WIREGUARD_INSTALLED_BY_US=true
+    REMOVE_WIREGUARD=$(osascript 2>/dev/null <<'APPLESCRIPT'
 display dialog "Remove WireGuard tools?
 
-WireGuard tools (wg, wg-quick) are used for VPN connections.
+WireGuard was installed by Capybara VPN installer.
 
 • Keep them: You can use WireGuard for other VPNs
-• Remove them: Completely removes WireGuard CLI tools
-
-Note: This does NOT remove WireGuard.app if installed from App Store." buttons {"Keep", "Remove"} default button 1 with icon caution with title "Capybara VPN Uninstaller"
+• Remove them: Completely removes WireGuard CLI tools" buttons {"Keep", "Remove"} default button 1 with icon caution with title "Capybara VPN Uninstaller"
 return button returned of result
 APPLESCRIPT
-)
+    )
+else
+    # WireGuard was already installed, don't ask to remove it
+    REMOVE_WIREGUARD="Keep"
+fi
 
 # Ask about configurations
 REMOVE_CONFIGS=$(osascript 2>/dev/null <<'APPLESCRIPT'

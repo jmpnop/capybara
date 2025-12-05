@@ -117,6 +117,49 @@ class InstallerBuilder:
         print(f"   Architecture: {arch_display}")
         return True
 
+    def embed_wireguard(self):
+        """Embed architecture-specific WireGuard binaries"""
+        print(f"📥 Embedding WireGuard tools for {self.arch}...")
+
+        # Determine which wg binary to use
+        if self.arch == "intel":
+            wg_binary_name = "wg_amd64"
+            arch_display = "Intel (x86_64)"
+        elif self.arch == "arm64":
+            wg_binary_name = "wg_arm64"
+            arch_display = "Apple Silicon (ARM64)"
+        else:
+            print(f"   ❌ Error: Unknown architecture '{self.arch}'")
+            return False
+
+        # Source binaries
+        wg_source = self.resources_dir / wg_binary_name
+        wg_quick_source = self.resources_dir / "wg-quick_universal"
+
+        if not wg_source.exists():
+            print(f"   ❌ Error: {wg_binary_name} not found in {self.resources_dir}")
+            return False
+
+        if not wg_quick_source.exists():
+            print(f"   ❌ Error: wg-quick_universal not found in {self.resources_dir}")
+            return False
+
+        # Destination in payload
+        wg_dest = self.build_dir / "payload" / "tmp" / "wg"
+        wg_quick_dest = self.build_dir / "payload" / "tmp" / "wg-quick"
+
+        # Copy binaries
+        shutil.copy(wg_source, wg_dest)
+        shutil.copy(wg_quick_source, wg_quick_dest)
+        os.chmod(wg_dest, 0o755)
+        os.chmod(wg_quick_dest, 0o755)
+
+        wg_size = wg_source.stat().st_size / 1024
+        print(f"   ✅ Embedded wg ({wg_size:.0f} KB)")
+        print(f"   ✅ Embedded wg-quick (bash script)")
+        print(f"   Architecture: {arch_display}")
+        return True
+
     def create_icon(self):
         """Create a simple app icon (optional)"""
         # For now, skip icon creation - can be added later
@@ -306,6 +349,8 @@ class InstallerBuilder:
         try:
             self.prepare_build_directory()
             if not self.download_udp2raw():
+                return False
+            if not self.embed_wireguard():
                 return False
             self.create_icon()
 

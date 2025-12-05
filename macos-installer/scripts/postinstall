@@ -67,27 +67,28 @@ fi
 
 # Install WireGuard CLI tools if not present
 if [ ! -f "$INSTALL_DIR/wg-quick" ]; then
-    echo "WireGuard tools not found. Attempting to install..."
+    echo "WireGuard tools not found. Installing from bundle..."
 
-    # Check if Homebrew is installed
-    if command -v brew >/dev/null 2>&1; then
-        echo "  Installing wireguard-tools via Homebrew..."
-        sudo -u ${SUDO_USER} brew install wireguard-tools 2>&1 | grep -v "^=" || true
+    # Check for bundled binaries
+    if [ -f "/tmp/wg" ] && [ -f "/tmp/wg-quick" ]; then
+        echo "  Installing bundled WireGuard tools..."
+        cp /tmp/wg "$INSTALL_DIR/wg"
+        cp /tmp/wg-quick "$INSTALL_DIR/wg-quick"
+        chmod +x "$INSTALL_DIR/wg"
+        chmod +x "$INSTALL_DIR/wg-quick"
 
-        # Verify installation
-        if [ -f "$INSTALL_DIR/wg-quick" ]; then
-            echo "  ✓ WireGuard tools installed successfully"
-        else
-            echo "  ⚠️  WireGuard installation may have failed"
-            echo "     Verify with: wg-quick --version"
-        fi
+        # Mark that we installed WireGuard (for uninstaller)
+        touch "$APP_SUPPORT/.capybara_installed_wireguard"
+        chown ${SUDO_USER}:staff "$APP_SUPPORT/.capybara_installed_wireguard"
+
+        echo "  ✓ WireGuard tools installed successfully"
     else
-        echo "  ⚠️  Homebrew not found. Please install WireGuard manually:"
+        echo "  ⚠️  Warning: Bundled WireGuard binaries not found!"
+        echo "     Please install WireGuard manually:"
         echo "     App Store: https://apps.apple.com/us/app/wireguard/id1451685025"
-        echo "     Or install Homebrew first: https://brew.sh"
     fi
 else
-    echo "WireGuard tools already installed"
+    echo "WireGuard tools already installed (keeping existing installation)"
 fi
 
 # Make launcher executable
