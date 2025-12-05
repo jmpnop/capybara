@@ -285,34 +285,44 @@ class InstallerBuilder:
 <body>
     <h1>✅ Installation Complete!</h1>
 
-    <h2>Next Steps:</h2>
-    <ol>
-        <li>Find "Capybara VPN" in your Applications folder or Spotlight</li>
-        <li>Launch the app and click "Connect"</li>
-        <li>Enter your administrator password when prompted</li>
-    </ol>
-
-    <h2>Dependencies Check:</h2>
-    <p>If you don't have WireGuard or udp2raw installed yet:</p>
-
-    <h3>Install WireGuard:</h3>
+    <h2>What Was Installed:</h2>
     <ul>
-        <li><strong>Option 1:</strong> Mac App Store (recommended)</li>
-        <li><strong>Option 2:</strong> <code>brew install wireguard-tools</code></li>
+        <li><strong>Capybara VPN.app</strong> - Main VPN application</li>
+        <li><strong>Uninstall Capybara VPN.app</strong> - GUI uninstaller</li>
+        <li><strong>WireGuard tools</strong> - VPN client (wg, wg-quick)</li>
+        <li><strong>udp2raw</strong> - Traffic obfuscation tool</li>
+        <li><strong>VPN configurations</strong> - Pre-configured for your account</li>
     </ul>
 
-    <h3>Install udp2raw:</h3>
+    <h2>Next Steps:</h2>
+    <ol>
+        <li>Find <strong>"Capybara VPN"</strong> in your Applications folder or Spotlight</li>
+        <li>Launch the app and click <strong>"Connect"</strong></li>
+        <li>Enter your administrator password when prompted</li>
+        <li>Wait a few seconds for the VPN to connect</li>
+    </ol>
+
+    <h2>All Dependencies Included:</h2>
+    <p><strong>No additional software needed!</strong> This installer includes everything:</p>
     <ul>
-        <li><strong>Apple Silicon:</strong> <code>brew install udp2raw-multiplatform</code></li>
-        <li><strong>Intel Mac:</strong> Already included in installer</li>
+        <li>✅ WireGuard CLI tools (bundled for your Mac architecture)</li>
+        <li>✅ udp2raw binary (bundled for your Mac architecture)</li>
+        <li>✅ Pre-configured VPN settings</li>
     </ul>
 
     <h2>Troubleshooting:</h2>
-    <p>If you have issues, check the log file:</p>
+    <p>If you have connection issues, check the log file:</p>
     <p><code>~/Library/Application Support/CapybaraVPN/vpn.log</code></p>
+    <p>You can also view connection status in the app.</p>
 
     <h2>To Uninstall:</h2>
-    <p>Run: <code>~/Library/Application Support/CapybaraVPN/uninstall.sh</code></p>
+    <p>Open <strong>"Uninstall Capybara VPN"</strong> from your Applications folder.</p>
+    <p>The uninstaller will guide you through removing components with options to keep or remove:</p>
+    <ul>
+        <li>udp2raw binary</li>
+        <li>WireGuard tools (only if installed by this installer)</li>
+        <li>VPN configurations</li>
+    </ul>
 </body>
 </html>
 """)
