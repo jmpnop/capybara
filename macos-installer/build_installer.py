@@ -255,7 +255,8 @@ class InstallerBuilder:
 
     <h2>What will be installed:</h2>
     <ul>
-        <li><strong>Capybara VPN.app</strong> - Main VPN application</li>
+        <li><strong>CapybaraWG.app</strong> - GUI VPN application (macOS 10.14+)</li>
+        <li><strong>Capybara VPN.app</strong> - CLI VPN launcher (macOS 10.13+)</li>
         <li><strong>Uninstall Capybara VPN.app</strong> - GUI uninstaller</li>
         <li><strong>WireGuard tools</strong> (wg, wg-quick) - Bundled VPN client</li>
         <li><strong>udp2raw</strong> - Bundled traffic obfuscation tool</li>
@@ -268,9 +269,23 @@ class InstallerBuilder:
         <li>Administrator access (for VPN connections)</li>
     </ul>
 
+    <h2>⚠️ IMPORTANT: Bypassing Gatekeeper Security</h2>
+    <p><strong style="color: #d9534f;">The apps are self-signed and will be blocked by macOS Gatekeeper.</strong></p>
+    <p>After installation, you MUST bypass Gatekeeper to launch the apps:</p>
+    <ol>
+        <li><strong>Option 1 (Recommended):</strong> Open Terminal and run:
+            <pre style="background: #f5f5f5; padding: 10px; border-radius: 5px; overflow-x: auto;">xattr -cr "/Applications/CapybaraWG.app"
+xattr -cr "/Applications/Capybara VPN.app"
+xattr -cr "/Applications/Uninstall Capybara VPN.app"</pre>
+        </li>
+        <li><strong>Option 2:</strong> Right-click each app → select "Open" → click "Open" in the warning dialog</li>
+    </ol>
+
     <h2>Everything Included:</h2>
     <p><strong>This is a self-contained installer.</strong> All dependencies are bundled - no additional software installation required!</p>
     <ul>
+        <li>✅ WireGuard GUI app (CapybaraWG) for macOS 10.14+</li>
+        <li>✅ CLI launcher for macOS 10.13 compatibility</li>
         <li>✅ WireGuard tools included (architecture-specific)</li>
         <li>✅ udp2raw binary included (architecture-specific)</li>
         <li>✅ VPN configurations included</li>
@@ -295,24 +310,41 @@ class InstallerBuilder:
 
     <h2>What Was Installed:</h2>
     <ul>
-        <li><strong>Capybara VPN.app</strong> - Main VPN application</li>
+        <li><strong>CapybaraWG.app</strong> - GUI VPN application (macOS 10.14+)</li>
+        <li><strong>Capybara VPN.app</strong> - CLI VPN launcher (macOS 10.13+)</li>
         <li><strong>Uninstall Capybara VPN.app</strong> - GUI uninstaller</li>
         <li><strong>WireGuard tools</strong> - VPN client (wg, wg-quick)</li>
         <li><strong>udp2raw</strong> - Traffic obfuscation tool</li>
         <li><strong>VPN configurations</strong> - Pre-configured for your account</li>
     </ul>
 
+    <h2>⚠️ CRITICAL FIRST STEP: Bypass Gatekeeper</h2>
+    <p><strong style="color: #d9534f;">Before using the apps, you MUST bypass Gatekeeper security:</strong></p>
+    <ol style="background: #fff3cd; padding: 15px; border-left: 5px solid #ffc107; margin: 10px 0;">
+        <li><strong>Open Terminal</strong> (Applications → Utilities → Terminal)</li>
+        <li><strong>Copy and paste this command:</strong>
+            <pre style="background: #f5f5f5; padding: 10px; border-radius: 5px; overflow-x: auto; margin: 10px 0;">xattr -cr "/Applications/CapybaraWG.app"
+xattr -cr "/Applications/Capybara VPN.app"
+xattr -cr "/Applications/Uninstall Capybara VPN.app"</pre>
+        </li>
+        <li><strong>Press Enter</strong></li>
+    </ol>
+    <p><em>Alternative: Right-click each app → "Open" → "Open" in warning dialog</em></p>
+
     <h2>Next Steps:</h2>
     <ol>
-        <li>Find <strong>"Capybara VPN"</strong> in your Applications folder or Spotlight</li>
-        <li>Launch the app and click <strong>"Connect"</strong></li>
+        <li><strong>macOS 10.14+:</strong> Launch <strong>CapybaraWG.app</strong> from Applications</li>
+        <li><strong>macOS 10.13:</strong> Launch <strong>Capybara VPN.app</strong> from Applications</li>
+        <li>Import your VPN configuration or manage tunnels</li>
+        <li>Click <strong>"Activate"</strong> or <strong>"Connect"</strong></li>
         <li>Enter your administrator password when prompted</li>
-        <li>Wait a few seconds for the VPN to connect</li>
     </ol>
 
     <h2>All Dependencies Included:</h2>
     <p><strong>No additional software needed!</strong> This installer includes everything:</p>
     <ul>
+        <li>✅ WireGuard GUI app (CapybaraWG) for modern macOS</li>
+        <li>✅ CLI launcher for High Sierra compatibility</li>
         <li>✅ WireGuard CLI tools (bundled for your Mac architecture)</li>
         <li>✅ udp2raw binary (bundled for your Mac architecture)</li>
         <li>✅ Pre-configured VPN settings</li>

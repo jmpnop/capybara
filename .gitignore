@@ -47,3 +47,4 @@ installers/*.pkg
 
 # Build directories
 macos-installer/build/
+macos-installer/wireguard-src/
