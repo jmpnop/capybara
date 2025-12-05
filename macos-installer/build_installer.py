@@ -255,9 +255,11 @@ class InstallerBuilder:
 
     <h2>What will be installed:</h2>
     <ul>
-        <li>Capybara VPN application in /Applications</li>
-        <li>VPN configuration files</li>
-        <li>Required command-line tools (if not present)</li>
+        <li><strong>Capybara VPN.app</strong> - Main VPN application</li>
+        <li><strong>Uninstall Capybara VPN.app</strong> - GUI uninstaller</li>
+        <li><strong>WireGuard tools</strong> (wg, wg-quick) - Bundled VPN client</li>
+        <li><strong>udp2raw</strong> - Bundled traffic obfuscation tool</li>
+        <li><strong>VPN configurations</strong> - Pre-configured for your account</li>
     </ul>
 
     <h2>System Requirements:</h2>
@@ -266,7 +268,13 @@ class InstallerBuilder:
         <li>Administrator access (for VPN connections)</li>
     </ul>
 
-    <p><strong>Note:</strong> If WireGuard or udp2raw are not installed, you'll need to install them separately.</p>
+    <h2>Everything Included:</h2>
+    <p><strong>This is a self-contained installer.</strong> All dependencies are bundled - no additional software installation required!</p>
+    <ul>
+        <li>✅ WireGuard tools included (architecture-specific)</li>
+        <li>✅ udp2raw binary included (architecture-specific)</li>
+        <li>✅ VPN configurations included</li>
+    </ul>
 </body>
 </html>
 """)
