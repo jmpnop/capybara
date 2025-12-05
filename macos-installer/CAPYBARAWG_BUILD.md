@@ -91,7 +91,22 @@ APP_ID_IOS = com.capybara.capybarawg
 APP_ID_MACOS = com.capybara.capybarawg
 ```
 
-### 4. Rename Product in Xcode Project
+### 4. Update UI Strings
+
+**File: `Sources/WireGuardApp/Base.lproj/Localizable.strings`**
+
+Replace WireGuard branding with CapybaraWG:
+
+```bash
+sed -i.bak 's/"About WireGuard"/"About CapybaraWG"/g; s/"Quit WireGuard"/"Quit CapybaraWG"/g; s/"Manage WireGuard Tunnels"/"Manage CapybaraWG Tunnels"/g' Sources/WireGuardApp/Base.lproj/Localizable.strings
+```
+
+This changes:
+- Menu: "About WireGuard" → "About CapybaraWG"
+- Menu: "Quit WireGuard" → "Quit CapybaraWG"
+- Window: "Manage WireGuard Tunnels" → "Manage CapybaraWG Tunnels"
+
+### 5. Rename Product in Xcode Project
 
 Edit `WireGuard.xcodeproj/project.pbxproj`:
 
@@ -99,7 +114,7 @@ Edit `WireGuard.xcodeproj/project.pbxproj`:
 sed -i.bak 's/PRODUCT_NAME = WireGuard;/PRODUCT_NAME = CapybaraWG;/g' WireGuard.xcodeproj/project.pbxproj
 ```
 
-### 5. Build
+### 6. Build
 
 ```bash
 xcodebuild -target WireGuardmacOS \
@@ -113,7 +128,7 @@ xcodebuild -target WireGuardmacOS \
 
 The built app will be at: `build/Release/CapybaraWG.app`
 
-### 6. Bypass Gatekeeper
+### 7. Bypass Gatekeeper
 
 Since the app is self-signed:
 
