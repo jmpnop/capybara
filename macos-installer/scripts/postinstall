@@ -32,44 +32,25 @@ fi
 
 # Install udp2raw if not present
 if [ ! -f "$INSTALL_DIR/udp2raw" ]; then
-    echo "Installing udp2raw..."
+    echo "Installing udp2raw from bundle..."
 
-    # Check for embedded binary first (works for both architectures if builder had it)
+    # Check for embedded binaries
     if [ -f "/tmp/udp2raw" ]; then
-        echo "  Using embedded udp2raw binary"
         cp /tmp/udp2raw "$INSTALL_DIR/udp2raw"
         chmod +x "$INSTALL_DIR/udp2raw"
+        echo "  ✓ udp2raw installed successfully"
     elif [ -f "/tmp/udp2raw_mp" ]; then
-        echo "  Using embedded udp2raw_mp binary"
         cp /tmp/udp2raw_mp "$INSTALL_DIR/udp2raw"
         chmod +x "$INSTALL_DIR/udp2raw"
+        echo "  ✓ udp2raw installed successfully"
     else
-        # No embedded binary - try Homebrew paths
-        ARCH=$(uname -m)
-        echo "  No embedded binary found, checking Homebrew..."
-
-        if [ "$ARCH" = "arm64" ]; then
-            # Apple Silicon
-            if [ -f "/opt/homebrew/opt/udp2raw-multiplatform/bin/udp2raw_mp" ]; then
-                echo "  Creating symlink to Homebrew udp2raw"
-                ln -sf /opt/homebrew/opt/udp2raw-multiplatform/bin/udp2raw_mp "$INSTALL_DIR/udp2raw"
-            else
-                echo "  ⚠️  Warning: udp2raw not found!"
-                echo "     Install with: brew install udp2raw-multiplatform"
-            fi
-        else
-            # Intel Mac
-            if [ -f "/usr/local/opt/udp2raw-multiplatform/bin/udp2raw_mp" ]; then
-                echo "  Creating symlink to Homebrew udp2raw"
-                ln -sf /usr/local/opt/udp2raw-multiplatform/bin/udp2raw_mp "$INSTALL_DIR/udp2raw"
-            else
-                echo "  ⚠️  Warning: udp2raw not found!"
-                echo "     Install with: brew install udp2raw-multiplatform"
-            fi
-        fi
+        echo "  ❌ ERROR: Bundled udp2raw binary not found!"
+        echo "     This installer package may be corrupted."
+        echo "     Please re-download the installer."
+        exit 1
     fi
 else
-    echo "udp2raw already installed at $INSTALL_DIR/udp2raw"
+    echo "udp2raw already installed (keeping existing installation)"
 fi
 
 # Install WireGuard CLI tools if not present
@@ -78,7 +59,6 @@ if [ ! -f "$INSTALL_DIR/wg-quick" ]; then
 
     # Check for bundled binaries
     if [ -f "/tmp/wg" ] && [ -f "/tmp/wg-quick" ]; then
-        echo "  Installing bundled WireGuard tools..."
         cp /tmp/wg "$INSTALL_DIR/wg"
         cp /tmp/wg-quick "$INSTALL_DIR/wg-quick"
         chmod +x "$INSTALL_DIR/wg"
@@ -90,9 +70,10 @@ if [ ! -f "$INSTALL_DIR/wg-quick" ]; then
 
         echo "  ✓ WireGuard tools installed successfully"
     else
-        echo "  ⚠️  Warning: Bundled WireGuard binaries not found!"
-        echo "     Please install WireGuard manually:"
-        echo "     App Store: https://apps.apple.com/us/app/wireguard/id1451685025"
+        echo "  ❌ ERROR: Bundled WireGuard binaries not found!"
+        echo "     This installer package may be corrupted."
+        echo "     Please re-download the installer."
+        exit 1
     fi
 else
     echo "WireGuard tools already installed (keeping existing installation)"
