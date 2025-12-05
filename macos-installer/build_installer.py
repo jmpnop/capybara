@@ -12,12 +12,19 @@ import argparse
 from pathlib import Path
 
 class InstallerBuilder:
-    def __init__(self, username, arch="arm64", output_dir="../installers"):
+    def __init__(self, username, arch="arm64", output_dir=None):
         self.username = username
         self.arch = arch  # "intel" or "arm64"
         self.project_root = Path(__file__).parent.parent
         self.installer_root = Path(__file__).parent
-        self.output_dir = Path(output_dir)
+
+        # Default to project_root/installers if not specified
+        if output_dir is None:
+            self.output_dir = self.project_root / "installers"
+        else:
+            # If output_dir is provided, resolve it as absolute or relative to CWD
+            self.output_dir = Path(output_dir).resolve()
+
         self.output_dir.mkdir(exist_ok=True)
 
         # Paths
@@ -380,8 +387,8 @@ def main():
     parser.add_argument("username", help="VPN username to build installer for")
     parser.add_argument("-a", "--arch", choices=["intel", "arm64", "both"], default="both",
                        help="Target architecture: intel, arm64, or both (default: both)")
-    parser.add_argument("-o", "--output", default="installers",
-                       help="Output directory for .pkg files (default: installers)")
+    parser.add_argument("-o", "--output", default=None,
+                       help="Output directory for .pkg files (default: project_root/installers)")
     parser.add_argument("--keep-build", action="store_true",
                        help="Keep build directory after completion")
 

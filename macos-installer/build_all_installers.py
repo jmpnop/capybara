@@ -12,10 +12,18 @@ from pathlib import Path
 from datetime import datetime
 
 class BatchInstallerBuilder:
-    def __init__(self, output_dir="../installers"):
+    def __init__(self, output_dir=None):
         self.project_root = Path(__file__).parent.parent
+        self.installer_root = Path(__file__).parent
         self.vpn_clients_dir = self.project_root / "vpn_clients"
-        self.output_dir = Path(output_dir)
+
+        # Default to project_root/installers if not specified
+        if output_dir is None:
+            self.output_dir = self.project_root / "installers"
+        else:
+            # If output_dir is provided, resolve it as absolute or relative to CWD
+            self.output_dir = Path(output_dir).resolve()
+
         self.builder_script = Path(__file__).parent / "build_installer.py"
 
         self.output_dir.mkdir(exist_ok=True)
@@ -227,8 +235,8 @@ def main():
     )
     parser.add_argument("users", nargs="*",
                        help="Specific users to build for (default: all users)")
-    parser.add_argument("-o", "--output", default="installers",
-                       help="Output directory for .pkg files (default: installers)")
+    parser.add_argument("-o", "--output", default=None,
+                       help="Output directory for .pkg files (default: project_root/installers)")
     parser.add_argument("--list", action="store_true",
                        help="List all available users and exit")
     parser.add_argument("--manifest", action="store_true",

@@ -11,6 +11,13 @@ APP_SUPPORT="$USER_HOME/Library/Application Support/CapybaraVPN"
 
 echo "Installing Capybara VPN..."
 
+# Create /usr/local/bin if it doesn't exist (common on fresh macOS installs)
+if [ ! -d "$INSTALL_DIR" ]; then
+    echo "  Creating $INSTALL_DIR directory..."
+    mkdir -p "$INSTALL_DIR"
+    chmod 755 "$INSTALL_DIR"
+fi
+
 # Create application support directory
 mkdir -p "$APP_SUPPORT"
 chown ${SUDO_USER}:staff "$APP_SUPPORT"
