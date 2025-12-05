@@ -91,7 +91,41 @@ APP_ID_IOS = com.capybara.capybarawg
 APP_ID_MACOS = com.capybara.capybarawg
 ```
 
-### 4. Update UI Strings
+### 4. Filter Tunnels by Bundle Identifier
+
+**File: `Sources/WireGuardApp/Tunnel/TunnelsManager.swift`**
+
+Add filtering after loading tunnels to prevent showing other apps' tunnels.
+
+In the `create()` function, after `var tunnelManagers = managers ?? []` add:
+
+```swift
+// Filter to only CapybaraWG tunnels (not official WireGuard or other apps)
+if let ourBundleId = Bundle.main.bundleIdentifier {
+    let ourExtensionBundleId = "\(ourBundleId).network-extension"
+    tunnelManagers = tunnelManagers.filter { manager in
+        guard let proto = manager.protocolConfiguration as? NETunnelProviderProtocol else { return false }
+        return proto.providerBundleIdentifier == ourExtensionBundleId
+    }
+}
+```
+
+In the `reload()` function, after `let loadedTunnelProviders = managers ?? []` add the same filtering code (change `let` to `var`):
+
+```swift
+var loadedTunnelProviders = managers ?? []
+
+// Filter to only CapybaraWG tunnels (not official WireGuard or other apps)
+if let ourBundleId = Bundle.main.bundleIdentifier {
+    let ourExtensionBundleId = "\(ourBundleId).network-extension"
+    loadedTunnelProviders = loadedTunnelProviders.filter { manager in
+        guard let proto = manager.protocolConfiguration as? NETunnelProviderProtocol else { return false }
+        return proto.providerBundleIdentifier == ourExtensionBundleId
+    }
+}
+```
+
+### 5. Update UI Strings
 
 **File: `Sources/WireGuardApp/Base.lproj/Localizable.strings`**
 
@@ -106,7 +140,7 @@ This changes:
 - Menu: "Quit WireGuard" → "Quit CapybaraWG"
 - Window: "Manage WireGuard Tunnels" → "Manage CapybaraWG Tunnels"
 
-### 5. Rename Product in Xcode Project
+### 6. Rename Product in Xcode Project
 
 Edit `WireGuard.xcodeproj/project.pbxproj`:
 
@@ -114,7 +148,7 @@ Edit `WireGuard.xcodeproj/project.pbxproj`:
 sed -i.bak 's/PRODUCT_NAME = WireGuard;/PRODUCT_NAME = CapybaraWG;/g' WireGuard.xcodeproj/project.pbxproj
 ```
 
-### 6. Build
+### 7. Build
 
 ```bash
 xcodebuild -target WireGuardmacOS \
@@ -128,7 +162,7 @@ xcodebuild -target WireGuardmacOS \
 
 The built app will be at: `build/Release/CapybaraWG.app`
 
-### 7. Bypass Gatekeeper
+### 8. Bypass Gatekeeper
 
 Since the app is self-signed:
 
@@ -160,3 +194,7 @@ Make sure you updated both:
 2. FileManager+Extension.swift app group dictionary key
 
 Both must reference `com.capybara.capybarawg.app_group_id`
+
+### Sees official WireGuard tunnels
+
+If CapybaraWG shows tunnels from the official WireGuard app, check that you added the filtering code to `TunnelsManager.swift` in both the `create()` and `reload()` functions to filter by `providerBundleIdentifier`
