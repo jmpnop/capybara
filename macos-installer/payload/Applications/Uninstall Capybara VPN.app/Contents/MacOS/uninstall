@@ -1,6 +1,6 @@
 #!/bin/bash
-# Capybara VPN Uninstaller
-# Interactive GUI uninstaller
+# Capybara VPN Universal Uninstaller
+# Interactive GUI uninstaller with component selection
 
 set -e
 
@@ -8,34 +8,101 @@ APP_SUPPORT="$HOME/Library/Application Support/CapybaraVPN"
 VPN_APP="/Applications/Capybara VPN.app"
 UNINSTALL_APP="/Applications/Uninstall Capybara VPN.app"
 
-# Function to show dialog
-show_dialog() {
-    osascript -e "display dialog \"$1\" buttons {\"$2\"} default button 1 with icon caution with title \"Capybara VPN Uninstaller\""
-}
+# Welcome and component selection
+RESPONSE=$(osascript 2>/dev/null <<'APPLESCRIPT'
+display dialog "Capybara VPN Uninstaller
 
-show_question() {
-    osascript -e "button returned of (display dialog \"$1\" buttons {\"Cancel\", \"$2\"} default button 2 with icon caution with title \"Capybara VPN Uninstaller\")"
-}
+Select components to remove:
 
-show_success() {
-    osascript -e "display dialog \"$1\" buttons {\"OK\"} default button 1 with icon note with title \"Capybara VPN Uninstaller\""
-}
+The Capybara VPN app will always be removed.
+You can choose to keep or remove other components." buttons {"Cancel", "Continue"} default button 2 with icon caution with title "Capybara VPN Uninstaller"
+return button returned of result
+APPLESCRIPT
+)
 
-# Welcome screen
-RESPONSE=$(osascript -e 'button returned of (display dialog "This will uninstall Capybara VPN from your Mac.\n\nThe following will be removed:\n• Capybara VPN application\n• VPN configurations\n• Connection logs\n• udp2raw binary\n• This uninstaller\n\nDo you want to continue?" buttons {"Cancel", "Uninstall"} default button 2 with icon caution with title "Capybara VPN Uninstaller")' 2>/dev/null)
-
-if [ "$RESPONSE" != "Uninstall" ]; then
+if [ "$RESPONSE" != "Continue" ]; then
     echo "User cancelled"
     exit 0
 fi
 
-# Stop VPN if running
-osascript -e 'display notification "Stopping VPN connections..." with title "Capybara VPN Uninstaller"'
+# Ask about udp2raw
+REMOVE_UDP2RAW=$(osascript 2>/dev/null <<'APPLESCRIPT'
+display dialog "Remove udp2raw binary?
+
+udp2raw is used for VPN obfuscation.
+
+• Keep it: udp2raw stays in /usr/local/bin
+• Remove it: Completely removes udp2raw
+
+Note: Capybara VPN will not work without udp2raw." buttons {"Keep", "Remove"} default button 1 with icon caution with title "Capybara VPN Uninstaller"
+return button returned of result
+APPLESCRIPT
+)
+
+# Ask about WireGuard
+REMOVE_WIREGUARD=$(osascript 2>/dev/null <<'APPLESCRIPT'
+display dialog "Remove WireGuard tools?
+
+WireGuard tools (wg, wg-quick) are used for VPN connections.
+
+• Keep them: You can use WireGuard for other VPNs
+• Remove them: Completely removes WireGuard CLI tools
+
+Note: This does NOT remove WireGuard.app if installed from App Store." buttons {"Keep", "Remove"} default button 1 with icon caution with title "Capybara VPN Uninstaller"
+return button returned of result
+APPLESCRIPT
+)
+
+# Ask about configurations
+REMOVE_CONFIGS=$(osascript 2>/dev/null <<'APPLESCRIPT'
+display dialog "Remove VPN configurations and logs?
+
+Your VPN configs contain:
+• WireGuard configuration files
+• Connection logs
+• Server settings
+
+• Keep them: Useful if reinstalling later
+• Remove All: Complete cleanup" buttons {"Keep Configs", "Remove All"} default button 1 with icon caution with title "Capybara VPN Uninstaller"
+return button returned of result
+APPLESCRIPT
+)
+
+# Final confirmation
+COMPONENTS="• Capybara VPN app"
+if [ "$REMOVE_UDP2RAW" = "Remove" ]; then
+    COMPONENTS="$COMPONENTS\n• udp2raw binary"
+fi
+if [ "$REMOVE_WIREGUARD" = "Remove" ]; then
+    COMPONENTS="$COMPONENTS\n• WireGuard CLI tools"
+fi
+if [ "$REMOVE_CONFIGS" = "Remove All" ]; then
+    COMPONENTS="$COMPONENTS\n• VPN configurations and logs"
+fi
+COMPONENTS="$COMPONENTS\n• This uninstaller"
+
+CONFIRM=$(osascript 2>/dev/null <<APPLESCRIPT
+display dialog "Ready to uninstall:
+
+$COMPONENTS
+
+This action cannot be undone." buttons {"Cancel", "Uninstall Now"} default button 2 with icon caution with title "Capybara VPN Uninstaller"
+return button returned of result
+APPLESCRIPT
+)
+
+if [ "$CONFIRM" != "Uninstall Now" ]; then
+    echo "User cancelled at confirmation"
+    exit 0
+fi
+
+# Start uninstallation
+osascript -e 'display notification "Stopping VPN connections..." with title "Capybara VPN Uninstaller"' 2>/dev/null
 
 # Stop udp2raw
 sudo killall udp2raw 2>/dev/null || true
 
-# Stop WireGuard
+# Stop WireGuard tunnels
 if [ -d "$APP_SUPPORT" ]; then
     for conf in "$APP_SUPPORT"/*_wireguard.conf; do
         if [ -f "$conf" ]; then
@@ -44,30 +111,65 @@ if [ -d "$APP_SUPPORT" ]; then
     done
 fi
 
-osascript -e 'display notification "Removing application..." with title "Capybara VPN Uninstaller"'
-
-# Remove VPN app
+# Remove Capybara VPN app (always)
+osascript -e 'display notification "Removing Capybara VPN app..." with title "Capybara VPN Uninstaller"' 2>/dev/null
 if [ -d "$VPN_APP" ]; then
     sudo rm -rf "$VPN_APP"
     echo "✓ Removed Capybara VPN app"
 fi
 
-# Remove udp2raw binary
-if [ -f "/usr/local/bin/udp2raw" ]; then
-    sudo rm -f /usr/local/bin/udp2raw
-    echo "✓ Removed udp2raw binary"
+# Remove udp2raw if requested
+if [ "$REMOVE_UDP2RAW" = "Remove" ]; then
+    osascript -e 'display notification "Removing udp2raw..." with title "Capybara VPN Uninstaller"' 2>/dev/null
+    if [ -f "/usr/local/bin/udp2raw" ]; then
+        sudo rm -f /usr/local/bin/udp2raw
+        echo "✓ Removed udp2raw binary"
+    fi
+    if [ -f "/usr/local/bin/udp2raw_mp" ]; then
+        sudo rm -f /usr/local/bin/udp2raw_mp
+        echo "✓ Removed udp2raw_mp binary"
+    fi
 fi
 
-# Ask about configurations
-KEEP_CONFIGS=$(osascript -e 'button returned of (display dialog "Do you want to remove VPN configurations and logs?\n\nIf you plan to reinstall later, you can keep them." buttons {"Keep Configs", "Remove All"} default button 1 with icon caution with title "Capybara VPN Uninstaller")' 2>/dev/null)
+# Remove WireGuard tools if requested
+if [ "$REMOVE_WIREGUARD" = "Remove" ]; then
+    osascript -e 'display notification "Removing WireGuard tools..." with title "Capybara VPN Uninstaller"' 2>/dev/null
 
-if [ "$KEEP_CONFIGS" = "Remove All" ]; then
+    # Remove WireGuard CLI tools
+    sudo rm -f /usr/local/bin/wg 2>/dev/null || true
+    sudo rm -f /usr/local/bin/wg-quick 2>/dev/null || true
+
+    # Ask about removing WireGuard.app if it exists
+    if [ -d "/Applications/WireGuard.app" ]; then
+        REMOVE_GUI=$(osascript 2>/dev/null <<'APPLESCRIPT'
+display dialog "WireGuard.app detected
+
+Do you also want to remove the WireGuard GUI app?
+
+• Keep: Leave WireGuard.app installed
+• Remove: Delete WireGuard.app" buttons {"Keep", "Remove"} default button 1 with icon caution with title "Capybara VPN Uninstaller"
+return button returned of result
+APPLESCRIPT
+        )
+
+        if [ "$REMOVE_GUI" = "Remove" ]; then
+            sudo rm -rf "/Applications/WireGuard.app"
+            echo "✓ Removed WireGuard.app"
+        fi
+    fi
+
+    echo "✓ Removed WireGuard CLI tools"
+fi
+
+# Remove configurations if requested
+if [ "$REMOVE_CONFIGS" = "Remove All" ]; then
+    osascript -e 'display notification "Removing configurations..." with title "Capybara VPN Uninstaller"' 2>/dev/null
     rm -rf "$APP_SUPPORT"
     echo "✓ Removed configurations and logs"
     CONFIG_MSG="All VPN data has been removed."
 else
     echo "✓ Kept configurations"
-    CONFIG_MSG="VPN configurations were kept in:\n~/Library/Application Support/CapybaraVPN/"
+    CONFIG_MSG="VPN configurations kept in:\n~/Library/Application Support/CapybaraVPN/"
 fi
 
 # Remove uninstaller itself
@@ -75,7 +177,19 @@ sudo rm -rf "$UNINSTALL_APP"
 echo "✓ Removed uninstaller"
 
 # Success message
-osascript -e "display dialog \"Capybara VPN has been successfully uninstalled.\n\n$CONFIG_MSG\" buttons {\"OK\"} default button 1 with icon note with title \"Uninstall Complete\"" 2>/dev/null
+FINAL_MSG="Capybara VPN has been successfully uninstalled.\n\n$CONFIG_MSG"
+
+if [ "$REMOVE_UDP2RAW" = "Keep" ]; then
+    FINAL_MSG="$FINAL_MSG\n\nudp2raw binary kept in /usr/local/bin"
+fi
+
+if [ "$REMOVE_WIREGUARD" = "Keep" ]; then
+    FINAL_MSG="$FINAL_MSG\nWireGuard tools kept in /usr/local/bin"
+fi
+
+osascript 2>/dev/null <<APPLESCRIPT
+display dialog "$FINAL_MSG" buttons {"OK"} default button 1 with icon note with title "Uninstall Complete"
+APPLESCRIPT
 
 echo "Uninstall complete!"
 exit 0
