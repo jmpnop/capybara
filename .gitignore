@@ -41,3 +41,9 @@ Thumbs.db
 # Backup files
 *.bak
 *.backup
+
+# Installer packages (large files with embedded configs)
+installers/*.pkg
+
+# Build directories
+macos-installer/build/

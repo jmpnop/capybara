@@ -571,61 +571,160 @@ Each user shares the server password or you can run multiple instances with diff
 
 ## Client Configuration (macOS)
 
-### Step 1: Download udp2raw for macOS
+**IMPORTANT**: The official udp2raw GitHub releases do NOT include macOS binaries. You must use Homebrew to install the macOS-compatible version.
 
-Visit https://github.com/wangyu-/udp2raw/releases and download the appropriate binary for your Mac (amd64 for Intel, arm64 for M1/M2/M3).
+### Step 1: Install udp2raw via Homebrew
 
 ```bash
-# Extract and make executable
-tar -xzf udp2raw_binaries.tar.gz
-chmod +x udp2raw_mac_amd64  # or udp2raw_mac_arm64
+# Install udp2raw-multiplatform (native macOS version)
+brew install udp2raw-multiplatform
+
+# Create a convenient symlink (optional, requires password)
+sudo ln -s /opt/homebrew/opt/udp2raw-multiplatform/bin/udp2raw_mp /usr/local/bin/udp2raw
+
+# Verify installation
+udp2raw --help
+# Or use full path if symlink not created:
+/opt/homebrew/opt/udp2raw-multiplatform/bin/udp2raw_mp --help
 ```
+
+**Why Homebrew?**
+- Official releases only contain Linux binaries (ELF format)
+- macOS requires Mach-O binaries compiled specifically for macOS
+- Homebrew's `udp2raw-multiplatform` package provides native macOS support for both Intel and Apple Silicon
 
 ### Step 2: Run udp2raw Client
 
 Open a terminal and run:
+
 ```bash
-./udp2raw_mac_amd64 -c -l 127.0.0.1:4096 -r YOUR_SERVER_IP:443 -k YOUR_UDP2RAW_PASSWORD --raw-mode faketcp --cipher-mode xor --auth-mode hmac_sha1 -a --fix-gro
+# Using symlink (if created in Step 1)
+sudo udp2raw -c \
+  -l 127.0.0.1:4096 \
+  -r YOUR_SERVER_IP:443 \
+  -k YOUR_UDP2RAW_PASSWORD \
+  --raw-mode faketcp \
+  --cipher-mode xor \
+  --auth-mode hmac_sha1
 ```
 
-**Important**: Keep this terminal window open while using the VPN.
+**Or using full path** (if symlink not created):
+
+```bash
+sudo /opt/homebrew/opt/udp2raw-multiplatform/bin/udp2raw_mp -c \
+  -l 127.0.0.1:4096 \
+  -r YOUR_SERVER_IP:443 \
+  -k YOUR_UDP2RAW_PASSWORD \
+  --raw-mode faketcp \
+  --cipher-mode xor \
+  --auth-mode hmac_sha1
+```
+
+**Important Notes**:
+- Replace `YOUR_SERVER_IP` with your actual server IP address
+- Replace `YOUR_UDP2RAW_PASSWORD` with the password from your server's `/etc/wireguard/wg0.conf`
+- **Keep this terminal window open** while using the VPN
+- `sudo` is required for raw socket access
+- **Do NOT use `--fix-gro` or `-a`** - these flags are Linux-specific and will cause an error on macOS
 
 ### Step 3: Install WireGuard App
 
-Download from Mac App Store: https://apps.apple.com/us/app/wireguard/id1451685025
+**Option A: Mac App Store** (Recommended)
+- Download from: https://apps.apple.com/us/app/wireguard/id1451685025
 
-### Step 4: Create WireGuard Configuration
+**Option B: Homebrew**
+```bash
+brew install --cask wireguard-tools
+```
 
-In the WireGuard app, add a new tunnel with this configuration:
+### Step 4: Import WireGuard Configuration
+
+You should have received a `.conf` file (e.g., `username_wireguard.conf`) from your server admin or generated via Capybara.
+
+**Method 1: Import via WireGuard App** (Easiest)
+
+1. Open WireGuard app
+2. Click **"Import Tunnel(s) from File..."** (bottom left)
+3. Select your `.conf` file
+4. Click "Open"
+
+**Method 2: Drag and Drop**
+
+1. Open WireGuard app
+2. Drag the `.conf` file directly into the WireGuard window
+
+**Method 3: Create Manually**
+
+In the WireGuard app, click "Add Empty Tunnel" and paste:
 
 ```ini
 [Interface]
-PrivateKey = 2MkhVZASXn/bBrOjrolSdNrIckiFBcu0GXOMjoiwDUc=
+PrivateKey = YOUR_CLIENT_PRIVATE_KEY
 Address = 10.7.0.2/24
 MTU = 1280
 DNS = 1.1.1.1, 8.8.8.8
 
 [Peer]
-PublicKey = D1m+SC4pa0UDNLXcKb/+cWO1rMXgvEQYl1CZlEFD/1A=
+PublicKey = YOUR_SERVER_PUBLIC_KEY
 AllowedIPs = 0.0.0.0/0
 Endpoint = 127.0.0.1:4096
 PersistentKeepalive = 25
 ```
 
-**Key Points**:
-- `PrivateKey`: Use the client1 private key generated on the server
-- `Address`: Must match the IP assigned to this client (10.7.0.2/24)
-- `PublicKey`: The server's public key
-- `Endpoint`: Points to local udp2raw client (127.0.0.1:4096)
+**Configuration Parameters Explained**:
+- `PrivateKey`: Your client's WireGuard private key (from server admin)
+- `Address`: Your assigned VPN IP address (e.g., 10.7.0.2/24)
+- `PublicKey`: The server's WireGuard public key
+- `Endpoint`: **MUST be 127.0.0.1:4096** (points to local udp2raw client)
 - `AllowedIPs`: 0.0.0.0/0 routes all traffic through VPN
-- `DNS`: Optional, use preferred DNS servers
+- `DNS`: Optional, use your preferred DNS servers
 
-### Step 5: Connect
+**CRITICAL**: The `Endpoint` must point to `127.0.0.1:4096` (your local udp2raw client), NOT your server's IP. This creates a tunnel-within-a-tunnel:
+```
+WireGuard → udp2raw (localhost:4096) → Server (SERVER_IP:443)
+```
 
-1. Ensure udp2raw client is running in terminal
-2. Activate the tunnel in WireGuard app
-3. Verify connection: `ping 10.7.0.1`
-4. Check your public IP: `curl ifconfig.me`
+### Step 5: Connect to VPN
+
+**Two-Step Connection Process**:
+
+1. **Terminal Window**: Start udp2raw client (from Step 2)
+   ```bash
+   sudo udp2raw -c -l 127.0.0.1:4096 -r YOUR_SERVER_IP:443 -k YOUR_PASSWORD --raw-mode faketcp --cipher-mode xor --auth-mode hmac_sha1
+   ```
+
+   You should see:
+   ```
+   [INFO] client mode
+   [INFO] listening on 127.0.0.1:4096
+   [INFO] remote address YOUR_SERVER_IP:443
+   ```
+
+2. **WireGuard App**: Activate your tunnel
+   - Click the toggle switch next to your tunnel name
+   - Status should change to "Active"
+
+### Step 6: Verify Connection
+
+```bash
+# Test VPN tunnel to server
+ping 10.7.0.1
+
+# Check your public IP (should show server IP)
+curl ifconfig.me
+
+# Test DNS resolution
+nslookup google.com
+
+# Check WireGuard interface
+ifconfig | grep -A 5 utun
+```
+
+**Expected Results**:
+- `ping 10.7.0.1` should succeed (VPN server responds)
+- `curl ifconfig.me` should show your server's public IP
+- DNS lookups should work
+- You should see a `utun` interface with IP 10.7.0.x
 
 ---
 
@@ -842,6 +941,102 @@ ssh root@YOUR_SERVER_IP "iptables -t nat -I POSTROUTING -o eth0 -j MASQUERADE &&
    ssh root@YOUR_SERVER_IP "top -bn1 | head -20"
    ```
 
+### macOS Client: udp2raw Errors with Linux-Only Flags
+
+**Symptoms**:
+- `[FATAL] invalid option --fix-gro`
+- `[FATAL] -a not supported in this version, check -g or --raw-mode easyfaketcp`
+
+**Root Cause**: The `--fix-gro` and `-a` flags are Linux-specific and not available on macOS
+
+**Solution**: Remove both `--fix-gro` and `-a` from the command:
+```bash
+# Correct for macOS
+sudo udp2raw -c -l 127.0.0.1:4096 -r SERVER_IP:443 -k PASSWORD --raw-mode faketcp --cipher-mode xor --auth-mode hmac_sha1
+
+# WRONG - includes Linux-only flags
+sudo udp2raw -c -l 127.0.0.1:4096 -r SERVER_IP:443 -k PASSWORD --raw-mode faketcp --cipher-mode xor --auth-mode hmac_sha1 -a --fix-gro
+```
+
+### macOS Client: Wrong Binary Format (ELF)
+
+**Symptoms**:
+- `udp2raw: cannot execute binary file`
+- `line 1: Not: command not found`
+- Running `file /usr/local/bin/udp2raw` shows "ELF 64-bit LSB executable"
+
+**Root Cause**: Linux binary was installed instead of macOS binary
+
+**Solution**:
+```bash
+# Remove the Linux binary
+sudo rm /usr/local/bin/udp2raw
+
+# Install the correct macOS version via Homebrew
+brew install udp2raw-multiplatform
+
+# Create symlink
+sudo ln -s /opt/homebrew/opt/udp2raw-multiplatform/bin/udp2raw_mp /usr/local/bin/udp2raw
+```
+
+### macOS Client: "Operation not permitted" when running udp2raw
+
+**Symptoms**: udp2raw fails with permission errors
+
+**Solution**: Run with `sudo`:
+```bash
+sudo udp2raw -c -l 127.0.0.1:4096 -r SERVER_IP:443 -k PASSWORD --raw-mode faketcp --cipher-mode xor --auth-mode hmac_sha1
+```
+
+Raw sockets require root privileges on macOS.
+
+### macOS Client: Can't Import WireGuard Config with `open` Command
+
+**Symptoms**:
+```
+No application knows how to open URL file:///path/to/config.conf
+kLSApplicationNotFoundErr
+```
+
+**Solution**: Don't use `open`. Instead:
+
+**Method 1**: Import via WireGuard app
+```bash
+# Launch WireGuard first
+open -a WireGuard
+
+# Then in the app: Import Tunnel(s) from File... → select .conf file
+```
+
+**Method 2**: Use drag and drop
+1. Open WireGuard app
+2. Drag `.conf` file into the window
+
+### macOS Client: WireGuard Connects but No Internet
+
+**Check both layers**:
+
+1. Verify udp2raw is running:
+   ```bash
+   ps aux | grep udp2raw
+   lsof -i :4096
+   ```
+   Should show udp2raw listening on 127.0.0.1:4096
+
+2. Verify WireGuard is running:
+   ```bash
+   sudo wg show
+   ifconfig | grep utun
+   ```
+   Should show interface with your VPN IP (10.7.0.x)
+
+3. Test the tunnel:
+   ```bash
+   ping 10.7.0.1  # Server should respond
+   ```
+
+4. If ping works but internet doesn't, check server-side NAT (see troubleshooting above)
+
 ---
 
 ## Security Considerations
@@ -857,13 +1052,15 @@ ssh root@YOUR_SERVER_IP "iptables -t nat -I POSTROUTING -o eth0 -j MASQUERADE &&
 
 ## Important File Locations
 
+### Server (Alpine Linux)
+
 | File/Directory | Purpose |
 |---|---|
 | **WireGuard** | |
 | `/etc/wireguard/wg0.conf` | WireGuard server configuration |
 | `/etc/wireguard/server_private.key` | Server private key |
 | `/etc/wireguard/server_public.key` | Server public key |
-| `/usr/local/bin/udp2raw` | udp2raw binary |
+| `/usr/local/bin/udp2raw` | udp2raw binary (Linux) |
 | `/var/log/udp2raw.log` | udp2raw logs |
 | `/etc/local.d/wireguard.start` | WireGuard auto-start script |
 | **Shadowsocks** | |
@@ -880,6 +1077,17 @@ ssh root@YOUR_SERVER_IP "iptables -t nat -I POSTROUTING -o eth0 -j MASQUERADE &&
 | **Firewall** | |
 | `/etc/awall/private/custom-services.json` | Custom service definitions (all 3 protocols) |
 | `/etc/awall/optional/multi-vpn.json` | Multi-protocol VPN firewall policy |
+
+### Client (macOS)
+
+| File/Directory | Purpose |
+|---|---|
+| **udp2raw** | |
+| `/opt/homebrew/opt/udp2raw-multiplatform/bin/udp2raw_mp` | udp2raw binary (macOS, via Homebrew) |
+| `/usr/local/bin/udp2raw` | Optional symlink to udp2raw_mp |
+| **WireGuard** | |
+| `~/Library/Application Support/WireGuard/` | WireGuard configs (GUI app stores here) |
+| `~/.wireguard/` or any location | WireGuard configs (CLI, user choice) |
 
 ---
 
@@ -980,5 +1188,60 @@ Since udp2raw requires root access not available on iOS without jailbreak:
 
 ---
 
+## Platform Comparison: Server vs Client
+
+### udp2raw Installation
+
+| Platform | Installation Method | Binary Name | Source |
+|----------|-------------------|-------------|---------|
+| **Server (Alpine Linux)** | Manual download from GitHub | `udp2raw_amd64` → `/usr/local/bin/udp2raw` | https://github.com/wangyu-/udp2raw/releases |
+| **Client (macOS)** | Homebrew package | `udp2raw_mp` | `brew install udp2raw-multiplatform` |
+| **Client (Linux)** | Manual download from GitHub | `udp2raw_amd64` or `udp2raw_arm` | https://github.com/wangyu-/udp2raw/releases |
+
+### udp2raw Command Differences
+
+| Flag | Server (Linux) | Client (macOS) | Notes |
+|------|---------------|----------------|-------|
+| `--fix-gro` | ✅ Supported | ❌ **NOT supported** | Linux kernel optimization, causes error on macOS |
+| `-a` | ✅ Required | ❌ **NOT supported** | Auto-add iptables rules (Linux only), not needed on macOS |
+| `--raw-mode faketcp` | ✅ Required | ✅ Required | Same on both platforms |
+| `-s` (server) | ✅ Server only | ❌ Client uses `-c` | Server listens mode |
+| `-c` (client) | ❌ Server uses `-s` | ✅ Client only | Client connect mode |
+
+### WireGuard Configuration Differences
+
+| Parameter | Server | Client |
+|-----------|--------|--------|
+| **Endpoint** | Not used (server doesn't connect to peers) | **MUST be 127.0.0.1:4096** (local udp2raw) |
+| **ListenPort** | 51820 (localhost only) | Not specified (auto-assigned) |
+| **Address** | 10.7.0.1/24 (VPN gateway) | 10.7.0.x/24 (assigned by admin) |
+| **PrivateKey** | Server's private key | Client's unique private key |
+| **PreUp/PostDown** | Starts/stops udp2raw | Not needed (run manually) |
+
+### Key Differences Summary
+
+**Why you can't just copy server instructions for macOS client:**
+
+1. **Binary Format**:
+   - Linux: ELF format
+   - macOS: Mach-O format
+   - **They are NOT interchangeable**
+
+2. **udp2raw Source**:
+   - GitHub releases = Linux only
+   - Homebrew = macOS native builds
+
+3. **Flags**:
+   - `--fix-gro` and `-a` work on Linux server ✅
+   - `--fix-gro` and `-a` fail on macOS client ❌
+
+4. **Architecture**:
+   - Server: Always x86_64 (VPS providers use Intel)
+   - macOS: Could be x86_64 (Intel) or ARM64 (Apple Silicon)
+   - Homebrew automatically installs correct architecture
+
+---
+
 *Documentation created: 2025-01-06*
 *Server setup tested and verified on Alpine Linux 3.22.2*
+*macOS client setup updated: 2025-11-11 (Apple Silicon M1/M2/M3)*

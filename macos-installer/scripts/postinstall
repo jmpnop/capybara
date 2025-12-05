@@ -1,0 +1,113 @@
+#!/bin/bash
+# Post-installation script for Capybara VPN
+# This runs with root privileges after package installation
+
+set -e
+
+INSTALL_DIR="/usr/local/bin"
+APP_DIR="/Applications"
+USER_HOME=$(eval echo ~${SUDO_USER})
+APP_SUPPORT="$USER_HOME/Library/Application Support/CapybaraVPN"
+
+echo "Installing Capybara VPN..."
+
+# Create application support directory
+mkdir -p "$APP_SUPPORT"
+chown ${SUDO_USER}:staff "$APP_SUPPORT"
+
+# Move configs to application support (they're in /tmp/capybara-vpn-install/)
+if [ -d "/tmp/capybara-vpn-install" ]; then
+    cp /tmp/capybara-vpn-install/config.txt "$APP_SUPPORT/"
+    cp /tmp/capybara-vpn-install/*_wireguard.conf "$APP_SUPPORT/" 2>/dev/null || true
+    chown -R ${SUDO_USER}:staff "$APP_SUPPORT"
+    rm -rf /tmp/capybara-vpn-install
+fi
+
+# Install udp2raw if not present
+if [ ! -f "$INSTALL_DIR/udp2raw" ]; then
+    echo "Installing udp2raw..."
+
+    # Check for embedded binary first (works for both architectures if builder had it)
+    if [ -f "/tmp/udp2raw" ]; then
+        echo "  Using embedded udp2raw binary"
+        cp /tmp/udp2raw "$INSTALL_DIR/udp2raw"
+        chmod +x "$INSTALL_DIR/udp2raw"
+    elif [ -f "/tmp/udp2raw_mp" ]; then
+        echo "  Using embedded udp2raw_mp binary"
+        cp /tmp/udp2raw_mp "$INSTALL_DIR/udp2raw"
+        chmod +x "$INSTALL_DIR/udp2raw"
+    else
+        # No embedded binary - try Homebrew paths
+        ARCH=$(uname -m)
+        echo "  No embedded binary found, checking Homebrew..."
+
+        if [ "$ARCH" = "arm64" ]; then
+            # Apple Silicon
+            if [ -f "/opt/homebrew/opt/udp2raw-multiplatform/bin/udp2raw_mp" ]; then
+                echo "  Creating symlink to Homebrew udp2raw"
+                ln -sf /opt/homebrew/opt/udp2raw-multiplatform/bin/udp2raw_mp "$INSTALL_DIR/udp2raw"
+            else
+                echo "  ⚠️  Warning: udp2raw not found!"
+                echo "     Install with: brew install udp2raw-multiplatform"
+            fi
+        else
+            # Intel Mac
+            if [ -f "/usr/local/opt/udp2raw-multiplatform/bin/udp2raw_mp" ]; then
+                echo "  Creating symlink to Homebrew udp2raw"
+                ln -sf /usr/local/opt/udp2raw-multiplatform/bin/udp2raw_mp "$INSTALL_DIR/udp2raw"
+            else
+                echo "  ⚠️  Warning: udp2raw not found!"
+                echo "     Install with: brew install udp2raw-multiplatform"
+            fi
+        fi
+    fi
+else
+    echo "udp2raw already installed at $INSTALL_DIR/udp2raw"
+fi
+
+# Install WireGuard CLI tools if not present
+if [ ! -f "$INSTALL_DIR/wg-quick" ]; then
+    echo "Warning: WireGuard tools not found. Please install via App Store or Homebrew."
+    echo "  App Store: https://apps.apple.com/us/app/wireguard/id1451685025"
+    echo "  Homebrew: brew install wireguard-tools"
+fi
+
+# Make launcher executable
+chmod +x "$APP_DIR/Capybara VPN.app/Contents/MacOS/vpn-launcher"
+
+# Create uninstaller
+cat > "$APP_SUPPORT/uninstall.sh" << 'UNINSTALL_EOF'
+#!/bin/bash
+# Uninstall Capybara VPN
+
+echo "Uninstalling Capybara VPN..."
+
+# Stop VPN if running
+sudo killall udp2raw 2>/dev/null || true
+sudo /usr/local/bin/wg-quick down "$HOME/Library/Application Support/CapybaraVPN/"*_wireguard.conf 2>/dev/null || true
+
+# Remove application
+sudo rm -rf "/Applications/Capybara VPN.app"
+
+# Ask about removing configs
+read -p "Remove VPN configurations? (y/N) " -n 1 -r
+echo
+if [[ $REPLY =~ ^[Yy]$ ]]; then
+    rm -rf "$HOME/Library/Application Support/CapybaraVPN"
+fi
+
+echo "Uninstall complete"
+UNINSTALL_EOF
+
+chmod +x "$APP_SUPPORT/uninstall.sh"
+chown ${SUDO_USER}:staff "$APP_SUPPORT/uninstall.sh"
+
+echo "Installation complete!"
+echo ""
+echo "Capybara VPN has been installed."
+echo "Launch from Applications folder or Spotlight."
+echo ""
+echo "To uninstall, run:"
+echo "  $APP_SUPPORT/uninstall.sh"
+
+exit 0
