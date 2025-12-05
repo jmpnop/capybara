@@ -12,7 +12,7 @@ from pathlib import Path
 from datetime import datetime
 
 class BatchInstallerBuilder:
-    def __init__(self, output_dir="installers"):
+    def __init__(self, output_dir="../installers"):
         self.project_root = Path(__file__).parent.parent
         self.vpn_clients_dir = self.project_root / "vpn_clients"
         self.output_dir = Path(output_dir)

@@ -12,7 +12,7 @@ import argparse
 from pathlib import Path
 
 class InstallerBuilder:
-    def __init__(self, username, arch="arm64", output_dir="installers"):
+    def __init__(self, username, arch="arm64", output_dir="../installers"):
         self.username = username
         self.arch = arch  # "intel" or "arm64"
         self.project_root = Path(__file__).parent.parent

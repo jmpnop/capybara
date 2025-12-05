@@ -1,5 +1,5 @@
 {
-  "build_date": "2025-12-04T23:01:11.508058",
+  "build_date": "2025-12-05T03:49:13.311576",
   "total_users": 6,
   "total_packages": 12,
   "users": [
@@ -9,13 +9,13 @@
         {
           "architecture": "Intel",
           "filename": "CapybaraVPN-arky-Intel.pkg",
-          "size_mb": "4.02",
+          "size_mb": "4.95",
           "path": "installers/CapybaraVPN-arky-Intel.pkg"
         },
         {
           "architecture": "AppleSilicon",
           "filename": "CapybaraVPN-arky-AppleSilicon.pkg",
-          "size_mb": "1.32",
+          "size_mb": "2.25",
           "path": "installers/CapybaraVPN-arky-AppleSilicon.pkg"
         }
       ]
@@ -26,13 +26,13 @@
         {
           "architecture": "Intel",
           "filename": "CapybaraVPN-bnung2-Intel.pkg",
-          "size_mb": "4.02",
+          "size_mb": "4.95",
           "path": "installers/CapybaraVPN-bnung2-Intel.pkg"
         },
         {
           "architecture": "AppleSilicon",
           "filename": "CapybaraVPN-bnung2-AppleSilicon.pkg",
-          "size_mb": "1.32",
+          "size_mb": "2.25",
           "path": "installers/CapybaraVPN-bnung2-AppleSilicon.pkg"
         }
       ]
@@ -43,13 +43,13 @@
         {
           "architecture": "Intel",
           "filename": "CapybaraVPN-olga-Intel.pkg",
-          "size_mb": "4.02",
+          "size_mb": "4.95",
           "path": "installers/CapybaraVPN-olga-Intel.pkg"
         },
         {
           "architecture": "AppleSilicon",
           "filename": "CapybaraVPN-olga-AppleSilicon.pkg",
-          "size_mb": "1.32",
+          "size_mb": "2.25",
           "path": "installers/CapybaraVPN-olga-AppleSilicon.pkg"
         }
       ]
@@ -60,13 +60,13 @@
         {
           "architecture": "Intel",
           "filename": "CapybaraVPN-pasha-Intel.pkg",
-          "size_mb": "4.02",
+          "size_mb": "4.95",
           "path": "installers/CapybaraVPN-pasha-Intel.pkg"
         },
         {
           "architecture": "AppleSilicon",
           "filename": "CapybaraVPN-pasha-AppleSilicon.pkg",
-          "size_mb": "1.32",
+          "size_mb": "2.25",
           "path": "installers/CapybaraVPN-pasha-AppleSilicon.pkg"
         }
       ]
@@ -77,13 +77,13 @@
         {
           "architecture": "Intel",
           "filename": "CapybaraVPN-phil-Intel.pkg",
-          "size_mb": "4.02",
+          "size_mb": "4.95",
           "path": "installers/CapybaraVPN-phil-Intel.pkg"
         },
         {
           "architecture": "AppleSilicon",
           "filename": "CapybaraVPN-phil-AppleSilicon.pkg",
-          "size_mb": "1.32",
+          "size_mb": "2.25",
           "path": "installers/CapybaraVPN-phil-AppleSilicon.pkg"
         }
       ]
@@ -94,13 +94,13 @@
         {
           "architecture": "Intel",
           "filename": "CapybaraVPN-sergej-Intel.pkg",
-          "size_mb": "4.02",
+          "size_mb": "4.95",
           "path": "installers/CapybaraVPN-sergej-Intel.pkg"
         },
         {
           "architecture": "AppleSilicon",
           "filename": "CapybaraVPN-sergej-AppleSilicon.pkg",
-          "size_mb": "1.32",
+          "size_mb": "2.25",
           "path": "installers/CapybaraVPN-sergej-AppleSilicon.pkg"
         }
       ]
