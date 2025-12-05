@@ -1,0 +1,147 @@
+# Building CapybaraWG from Source
+
+CapybaraWG is a rebranded build of WireGuard that is completely isolated from the official WireGuard app.
+
+## Prerequisites
+
+- macOS 10.14+ (for running the app) or macOS 10.13+ (for CLI version)
+- Xcode 14.0+
+- Go 1.19+ (for building wireguard-go)
+
+## Build Steps
+
+### 1. Clone WireGuard Source
+
+```bash
+cd macos-installer
+git clone https://github.com/WireGuard/wireguard-apple.git wireguard-src
+cd wireguard-src
+git checkout 1.0.16-27
+```
+
+### 2. Apply Patches
+
+**File: `Sources/WireGuardKitC/WireGuardKitC.h`**
+
+Add `#include <sys/types.h>` at the top (after copyright header):
+
+```c
+// SPDX-License-Identifier: MIT
+// Copyright © 2018-2023 WireGuard LLC. All Rights Reserved.
+
+#include <sys/types.h>
+#include "key.h"
+#include "x25519.h"
+```
+
+**File: `Sources/WireGuardApp/UI/macOS/Info.plist`**
+
+Add after `CFBundleName`:
+
+```xml
+<key>CFBundleDisplayName</key>
+<string>CapybaraWG</string>
+```
+
+Change the app group key from `com.wireguard.macos.app_group_id` to:
+
+```xml
+<key>com.capybara.capybarawg.app_group_id</key>
+<string>$(DEVELOPMENT_TEAM).group.$(APP_ID_MACOS)</string>
+```
+
+Change `NSPrincipalClass` from `WireGuard.Application` to:
+
+```xml
+<key>NSPrincipalClass</key>
+<string>CapybaraWG.Application</string>
+```
+
+**File: `Sources/Shared/FileManager+Extension.swift`**
+
+Change the app group dictionary keys:
+
+```swift
+static var appGroupId: String? {
+    #if os(iOS)
+    let appGroupIdInfoDictionaryKey = "com.capybara.capybarawg.app_group_id"
+    #elseif os(macOS)
+    let appGroupIdInfoDictionaryKey = "com.capybara.capybarawg.app_group_id"
+    #else
+    #error("Unimplemented")
+    #endif
+    return Bundle.main.object(forInfoDictionaryKey: appGroupIdInfoDictionaryKey) as? String
+}
+```
+
+### 3. Create Developer.xcconfig
+
+**File: `Sources/WireGuardApp/Config/Developer.xcconfig`**
+
+```
+// Developer.xcconfig - Self-signed build for CapybaraWG
+
+// Self-signed (no Apple Developer account needed)
+CODE_SIGN_IDENTITY = -
+CODE_SIGN_STYLE = Automatic
+DEVELOPMENT_TEAM =
+
+// The bundle identifier of the apps - completely separate from official WireGuard
+APP_ID_IOS = com.capybara.capybarawg
+APP_ID_MACOS = com.capybara.capybarawg
+```
+
+### 4. Rename Product in Xcode Project
+
+Edit `WireGuard.xcodeproj/project.pbxproj`:
+
+```bash
+sed -i.bak 's/PRODUCT_NAME = WireGuard;/PRODUCT_NAME = CapybaraWG;/g' WireGuard.xcodeproj/project.pbxproj
+```
+
+### 5. Build
+
+```bash
+xcodebuild -target WireGuardmacOS \
+  -configuration Release \
+  -sdk macosx \
+  CODE_SIGN_STYLE=Manual \
+  CODE_SIGN_IDENTITY= \
+  DEVELOPMENT_TEAM= \
+  build
+```
+
+The built app will be at: `build/Release/CapybaraWG.app`
+
+### 6. Bypass Gatekeeper
+
+Since the app is self-signed:
+
+```bash
+xattr -cr build/Release/CapybaraWG.app
+```
+
+## Key Differences from Official WireGuard
+
+- **Bundle ID**: `com.capybara.capybarawg` (vs `com.wireguard.macos`)
+- **Display Name**: `CapybaraWG` (vs `WireGuard`)
+- **App Group**: Separate container (won't share tunnels with official WireGuard)
+- **Configuration**: Completely isolated settings and tunnels
+
+## Troubleshooting
+
+### Build fails with Swift/C errors
+
+Make sure you added `#include <sys/types.h>` to `WireGuardKitC.h`
+
+### App crashes on launch
+
+Check that you updated `NSPrincipalClass` from `WireGuard.Application` to `CapybaraWG.Application`
+
+### Shows official WireGuard tunnels
+
+Make sure you updated both:
+1. Info.plist app group key
+2. FileManager+Extension.swift app group dictionary key
+
+Both must reference `com.capybara.capybarawg.app_group_id`
