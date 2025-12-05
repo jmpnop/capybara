@@ -6,6 +6,8 @@
 	<string>25C5048a</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
+	<key>CFBundleDisplayName</key>
+	<string>CapybaraWG</string>
 	<key>CFBundleExecutable</key>
 	<string>CapybaraWG</string>
 	<key>CFBundleIconFile</key>
@@ -58,7 +60,7 @@
 	<string>Copyright © 2018-2023 WireGuard LLC. All Rights Reserved.</string>
 	<key>NSPrincipalClass</key>
 	<string>CapybaraWG.Application</string>
-	<key>com.wireguard.macos.app_group_id</key>
+	<key>com.capybara.capybarawg.app_group_id</key>
 	<string>.group.com.capybara.capybarawg</string>
 </dict>
 </plist>
