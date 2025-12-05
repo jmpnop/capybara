@@ -337,19 +337,18 @@ xattr -cr "/Applications/Uninstall Capybara VPN.app"</pre>
     <h3>For CapybaraWG (GUI App - macOS 10.14+):</h3>
     <ol>
         <li><strong>Launch CapybaraWG.app</strong> from Applications folder</li>
-        <li><strong>Import your tunnel configuration:</strong>
-            <ul style="margin-top: 10px;">
-                <li><strong>Option 1:</strong> Click "Import Tunnel(s) from File..." (bottom left corner)</li>
-                <li><strong>Option 2:</strong> Drag and drop the config file into CapybaraWG window</li>
-            </ul>
-            <div style="background: #e7f3ff; padding: 10px; border-left: 4px solid #2196F3; margin: 10px 0;">
-                📄 Your config file: <strong>CapybaraWG-{self.username}.conf</strong> (on your Desktop)
-            </div>
-        </li>
+        <li><div style="background: #d4edda; padding: 10px; border-left: 4px solid #28a745; margin: 10px 0;">
+            ✨ <strong>Your tunnel is automatically imported on first launch!</strong><br>
+            No manual configuration needed - CapybaraWG will find and import your settings automatically.
+        </div></li>
         <li>Toggle the switch to <strong>"Activate"</strong> the tunnel</li>
         <li>Enter your administrator password when prompted</li>
         <li>✅ You're connected! All your traffic is now encrypted and obfuscated.</li>
     </ol>
+
+    <div style="background: #f8f9fa; padding: 10px; border-left: 4px solid #6c757d; margin: 10px 0;">
+        <strong>Note:</strong> A backup config file <strong>CapybaraWG-{self.username}.conf</strong> is also on your Desktop if you need to manually import later.
+    </div>
 
     <h3>For Capybara VPN (CLI App - macOS 10.13+):</h3>
     <ol>

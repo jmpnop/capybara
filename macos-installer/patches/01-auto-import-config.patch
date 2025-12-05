@@ -1,0 +1,65 @@
+diff --git a/Sources/WireGuardApp/UI/macOS/AppDelegate.swift b/Sources/WireGuardApp/UI/macOS/AppDelegate.swift
+index 1dda3e6..5a04767 100644
+--- a/Sources/WireGuardApp/UI/macOS/AppDelegate.swift
++++ b/Sources/WireGuardApp/UI/macOS/AppDelegate.swift
+@@ -58,6 +58,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
+                 self.tunnelsTracker = tunnelsTracker
+                 self.statusItemController = statusItemController
+ 
++                // Auto-import config on first launch if no tunnels exist
++                if tunnelsManager.numberOfTunnels() == 0 {
++                    self.autoImportConfigIfAvailable(tunnelsManager: tunnelsManager)
++                }
++
+                 if !isLaunchedAtLogin {
+                     self.showManageTunnelsWindow(completion: nil)
+                 }
+@@ -185,6 +190,48 @@ class AppDelegate: NSObject, NSApplicationDelegate {
+         onAppDeactivation?()
+         onAppDeactivation = nil
+     }
++
++    private func autoImportConfigIfAvailable(tunnelsManager: TunnelsManager) {
++        // Look for config file in Application Support directory
++        guard let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first else {
++            return
++        }
++
++        let capybaraDir = appSupport.appendingPathComponent("CapybaraVPN")
++
++        // Find any .conf file
++        do {
++            let files = try FileManager.default.contentsOfDirectory(at: capybaraDir, includingPropertiesForKeys: nil)
++            guard let configFile = files.first(where: { $0.pathExtension == "conf" }) else {
++                return
++            }
++
++            // Read config file
++            let configString = try String(contentsOf: configFile, encoding: .utf8)
++
++            // Extract tunnel name from filename (e.g., "pasha_wireguard.conf" -> "pasha")
++            let tunnelName = configFile.deletingPathExtension().lastPathComponent.replacingOccurrences(of: "_wireguard", with: "")
++
++            // Parse configuration
++            guard let tunnelConfig = try? TunnelConfiguration(fromWgQuickConfig: configString, called: tunnelName) else {
++                wg_log(.error, message: "Failed to parse auto-import config file: \(configFile.path)")
++                return
++            }
++
++            // Add tunnel to manager
++            tunnelsManager.add(tunnelConfiguration: tunnelConfig) { result in
++                switch result {
++                case .success(let tunnel):
++                    wg_log(.info, message: "Auto-imported tunnel: \(tunnel.name)")
++                case .failure(let error):
++                    wg_log(.error, message: "Failed to auto-import tunnel: \(error)")
++                }
++            }
++        } catch {
++            // No config file found or error reading - that's fine, just skip auto-import
++            return
++        }
++    }
+ }
+ 
+ extension AppDelegate {

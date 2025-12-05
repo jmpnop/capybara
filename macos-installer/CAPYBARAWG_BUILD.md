@@ -177,14 +177,23 @@ xattr -cr build/Release/CapybaraWG.app
 - **App Group**: Separate container (won't share tunnels with official WireGuard)
 - **Configuration**: Completely isolated settings and tunnels
 
-## Importing Tunnel Configuration
+## Automatic Tunnel Configuration Import
 
-When you install the Capybara VPN package, the installer automatically:
+**CapybaraWG automatically imports your VPN configuration on first launch!**
 
-1. **Copies your WireGuard config to Desktop** - Look for `CapybaraWG-<username>.conf`
-2. **Also stores a copy in** `~/Library/Application Support/CapybaraVPN/` for the CLI app
+### How Auto-Import Works
 
-### To import into CapybaraWG (GUI):
+When you install the Capybara VPN package:
+
+1. **Installer copies config** to `~/Library/Application Support/CapybaraVPN/<username>_wireguard.conf`
+2. **Backup copy placed on Desktop** as `CapybaraWG-<username>.conf` (for manual use if needed)
+3. **On first launch**, CapybaraWG checks if there are zero tunnels
+4. **If no tunnels found**, it automatically looks for and imports the config from Application Support
+5. **Tunnel appears** ready to use - just toggle the switch to activate!
+
+### Manual Import (If Needed)
+
+If you need to manually import the config later (e.g., after resetting CapybaraWG):
 
 **Method 1: Import via Menu**
 1. Launch CapybaraWG.app
@@ -196,11 +205,15 @@ When you install the Capybara VPN package, the installer automatically:
 1. Launch CapybaraWG.app
 2. Drag `CapybaraWG-<username>.conf` into the CapybaraWG window
 
-**Method 3: Double-click**
-1. Double-click `CapybaraWG-<username>.conf` on Desktop
-2. Select "Open with CapybaraWG"
+### Implementation Details
 
-Once imported, toggle the switch to activate the tunnel.
+The auto-import feature is implemented in `Sources/WireGuardApp/UI/macOS/AppDelegate.swift`:
+
+- **Trigger**: `applicationDidFinishLaunching` after `TunnelsManager.create()` succeeds
+- **Condition**: Only runs if `tunnelsManager.numberOfTunnels() == 0`
+- **Location**: Looks for any `.conf` file in `~/Library/Application Support/CapybaraVPN/`
+- **Name extraction**: Strips `_wireguard` suffix from filename (e.g., `pasha_wireguard.conf` → tunnel named `pasha`)
+- **Error handling**: Fails silently if no config found or parse error occurs
 
 ## Troubleshooting
 
