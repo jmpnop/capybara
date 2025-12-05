@@ -177,6 +177,31 @@ xattr -cr build/Release/CapybaraWG.app
 - **App Group**: Separate container (won't share tunnels with official WireGuard)
 - **Configuration**: Completely isolated settings and tunnels
 
+## Importing Tunnel Configuration
+
+When you install the Capybara VPN package, the installer automatically:
+
+1. **Copies your WireGuard config to Desktop** - Look for `CapybaraWG-<username>.conf`
+2. **Also stores a copy in** `~/Library/Application Support/CapybaraVPN/` for the CLI app
+
+### To import into CapybaraWG (GUI):
+
+**Method 1: Import via Menu**
+1. Launch CapybaraWG.app
+2. Click "Import Tunnel(s) from File..." (bottom left)
+3. Select `CapybaraWG-<username>.conf` from Desktop
+4. Click "Open"
+
+**Method 2: Drag and Drop**
+1. Launch CapybaraWG.app
+2. Drag `CapybaraWG-<username>.conf` into the CapybaraWG window
+
+**Method 3: Double-click**
+1. Double-click `CapybaraWG-<username>.conf` on Desktop
+2. Select "Open with CapybaraWG"
+
+Once imported, toggle the switch to activate the tunnel.
+
 ## Troubleshooting
 
 ### Build fails with Swift/C errors

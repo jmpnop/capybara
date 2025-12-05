@@ -26,6 +26,18 @@ chown ${SUDO_USER}:staff "$APP_SUPPORT"
 if [ -d "/tmp/capybara-vpn-install" ]; then
     cp /tmp/capybara-vpn-install/config.txt "$APP_SUPPORT/"
     cp /tmp/capybara-vpn-install/*_wireguard.conf "$APP_SUPPORT/" 2>/dev/null || true
+
+    # Also copy WireGuard config to Desktop for easy import into CapybaraWG
+    DESKTOP="$USER_HOME/Desktop"
+    USERNAME=$(cat /tmp/capybara-vpn-install/config.txt)
+    WG_CONF=$(ls /tmp/capybara-vpn-install/*_wireguard.conf 2>/dev/null | head -n1)
+    if [ -n "$WG_CONF" ]; then
+        # Rename config file to be more user-friendly
+        cp "$WG_CONF" "$DESKTOP/CapybaraWG-${USERNAME}.conf"
+        chown ${SUDO_USER}:staff "$DESKTOP/CapybaraWG-${USERNAME}.conf"
+        echo "  ✓ WireGuard config copied to Desktop: CapybaraWG-${USERNAME}.conf"
+    fi
+
     chown -R ${SUDO_USER}:staff "$APP_SUPPORT"
     rm -rf /tmp/capybara-vpn-install
 fi

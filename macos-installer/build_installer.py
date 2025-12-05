@@ -261,6 +261,7 @@ class InstallerBuilder:
         <li><strong>WireGuard tools</strong> (wg, wg-quick) - Bundled VPN client</li>
         <li><strong>udp2raw</strong> - Bundled traffic obfuscation tool</li>
         <li><strong>VPN configurations</strong> - Pre-configured for your account</li>
+        <li><strong>Desktop config file</strong> - CapybaraWG-{self.username}.conf (for easy import into GUI app)</li>
     </ul>
 
     <h2>System Requirements:</h2>
@@ -332,11 +333,28 @@ xattr -cr "/Applications/Uninstall Capybara VPN.app"</pre>
     <p><em>Alternative: Right-click each app → "Open" → "Open" in warning dialog</em></p>
 
     <h2>Next Steps:</h2>
+
+    <h3>For CapybaraWG (GUI App - macOS 10.14+):</h3>
     <ol>
-        <li><strong>macOS 10.14+:</strong> Launch <strong>CapybaraWG.app</strong> from Applications</li>
-        <li><strong>macOS 10.13:</strong> Launch <strong>Capybara VPN.app</strong> from Applications</li>
-        <li>Import your VPN configuration or manage tunnels</li>
-        <li>Click <strong>"Activate"</strong> or <strong>"Connect"</strong></li>
+        <li><strong>Launch CapybaraWG.app</strong> from Applications folder</li>
+        <li><strong>Import your tunnel configuration:</strong>
+            <ul style="margin-top: 10px;">
+                <li><strong>Option 1:</strong> Click "Import Tunnel(s) from File..." (bottom left corner)</li>
+                <li><strong>Option 2:</strong> Drag and drop the config file into CapybaraWG window</li>
+            </ul>
+            <div style="background: #e7f3ff; padding: 10px; border-left: 4px solid #2196F3; margin: 10px 0;">
+                📄 Your config file: <strong>CapybaraWG-{self.username}.conf</strong> (on your Desktop)
+            </div>
+        </li>
+        <li>Toggle the switch to <strong>"Activate"</strong> the tunnel</li>
+        <li>Enter your administrator password when prompted</li>
+        <li>✅ You're connected! All your traffic is now encrypted and obfuscated.</li>
+    </ol>
+
+    <h3>For Capybara VPN (CLI App - macOS 10.13+):</h3>
+    <ol>
+        <li><strong>Launch Capybara VPN.app</strong> from Applications folder</li>
+        <li>The VPN configuration is pre-installed - just click <strong>"Connect"</strong></li>
         <li>Enter your administrator password when prompted</li>
     </ol>
 
