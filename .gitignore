@@ -1,6 +1,8 @@
 # VPN client configurations (contain private keys)
 vpn_clients/
 *.conf
+# But allow template configs (no private data)
+!macos-installer/templates/*.conf
 
 # IDE and editor files
 .claude/
@@ -48,3 +50,4 @@ installers/*.pkg
 # Build directories
 macos-installer/build/
 macos-installer/wireguard-src/
+macos-installer/generated_configs/

@@ -23,24 +23,69 @@ mkdir -p "$APP_SUPPORT"
 chown ${SUDO_USER}:staff "$APP_SUPPORT"
 
 # Move configs to application support (they're in /tmp/capybara-vpn-install/)
-if [ -d "/tmp/capybara-vpn-install" ]; then
-    cp /tmp/capybara-vpn-install/config.txt "$APP_SUPPORT/"
-    cp /tmp/capybara-vpn-install/*_wireguard.conf "$APP_SUPPORT/" 2>/dev/null || true
-
-    # Also copy WireGuard config to Desktop for easy import into CapybaraWG
-    DESKTOP="$USER_HOME/Desktop"
-    USERNAME=$(cat /tmp/capybara-vpn-install/config.txt)
-    WG_CONF=$(ls /tmp/capybara-vpn-install/*_wireguard.conf 2>/dev/null | head -n1)
-    if [ -n "$WG_CONF" ]; then
-        # Rename config file to be more user-friendly
-        cp "$WG_CONF" "$DESKTOP/CapybaraWG-${USERNAME}.conf"
-        chown ${SUDO_USER}:staff "$DESKTOP/CapybaraWG-${USERNAME}.conf"
-        echo "  ✓ WireGuard config copied to Desktop: CapybaraWG-${USERNAME}.conf"
-    fi
-
-    chown -R ${SUDO_USER}:staff "$APP_SUPPORT"
-    rm -rf /tmp/capybara-vpn-install
+if [ ! -d "/tmp/capybara-vpn-install" ]; then
+    echo "  ❌ ERROR: Config directory not found!"
+    echo "     Expected: /tmp/capybara-vpn-install/"
+    echo "     This installer package may be corrupted."
+    exit 1
 fi
+
+# Validate config.txt exists
+if [ ! -f "/tmp/capybara-vpn-install/config.txt" ]; then
+    echo "  ❌ ERROR: config.txt not found!"
+    exit 1
+fi
+
+USERNAME=$(cat /tmp/capybara-vpn-install/config.txt)
+echo "Installing VPN configuration for user: $USERNAME"
+
+# Copy username config
+cp /tmp/capybara-vpn-install/config.txt "$APP_SUPPORT/"
+
+# Find and validate WireGuard config
+WG_CONF=$(ls /tmp/capybara-vpn-install/*_wireguard.conf 2>/dev/null | head -n1)
+if [ -z "$WG_CONF" ]; then
+    echo "  ❌ ERROR: WireGuard config not found!"
+    echo "     Expected: /tmp/capybara-vpn-install/${USERNAME}_wireguard.conf"
+    exit 1
+fi
+
+# Validate config has required fields
+if ! grep -q "PrivateKey" "$WG_CONF" || ! grep -q "PublicKey" "$WG_CONF"; then
+    echo "  ❌ ERROR: WireGuard config is invalid (missing keys)!"
+    exit 1
+fi
+
+# Copy WireGuard config to Application Support
+cp "$WG_CONF" "$APP_SUPPORT/"
+echo "  ✓ WireGuard config installed to Application Support"
+
+# Also copy WireGuard config to Desktop for easy import into CapybaraWG
+DESKTOP="$USER_HOME/Desktop"
+cp "$WG_CONF" "$DESKTOP/CapybaraWG-${USERNAME}.conf"
+chown ${SUDO_USER}:staff "$DESKTOP/CapybaraWG-${USERNAME}.conf"
+echo "  ✓ WireGuard config copied to Desktop: CapybaraWG-${USERNAME}.conf"
+
+# Set correct ownership
+chown -R ${SUDO_USER}:staff "$APP_SUPPORT"
+
+# Install LaunchDaemon for udp2raw (enables CapybaraWG GUI to work)
+if [ -f "/tmp/capybara-vpn-install/com.capybara.udp2raw.plist" ]; then
+    cp "/tmp/capybara-vpn-install/com.capybara.udp2raw.plist" "/Library/LaunchDaemons/"
+    chmod 644 "/Library/LaunchDaemons/com.capybara.udp2raw.plist"
+    chown root:wheel "/Library/LaunchDaemons/com.capybara.udp2raw.plist"
+
+    # Start the LaunchDaemon
+    launchctl load "/Library/LaunchDaemons/com.capybara.udp2raw.plist" 2>/dev/null || true
+
+    echo "  ✓ udp2raw LaunchDaemon installed and started"
+    echo "     CapybaraWG will now work automatically!"
+else
+    echo "  ⚠️  WARNING: LaunchDaemon not found - CapybaraWG may require manual udp2raw start"
+fi
+
+# Clean up temp directory
+rm -rf /tmp/capybara-vpn-install
 
 # Install udp2raw if not present
 if [ ! -f "$INSTALL_DIR/udp2raw" ]; then

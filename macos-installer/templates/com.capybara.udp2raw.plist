@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>Label</key>
+	<string>com.capybara.udp2raw</string>
+
+	<key>ProgramArguments</key>
+	<array>
+		<string>/usr/local/bin/udp2raw</string>
+		<string>-c</string>
+		<string>-l</string>
+		<string>127.0.0.1:4096</string>
+		<string>-r</string>
+		<string>{{SERVER_IP}}:443</string>
+		<string>-k</string>
+		<string>{{UDP2RAW_PASSWORD}}</string>
+		<string>--raw-mode</string>
+		<string>faketcp</string>
+		<string>--cipher-mode</string>
+		<string>xor</string>
+		<string>--auth-mode</string>
+		<string>hmac_sha1</string>
+	</array>
+
+	<key>RunAtLoad</key>
+	<true/>
+
+	<key>KeepAlive</key>
+	<true/>
+
+	<key>StandardOutPath</key>
+	<string>/var/log/udp2raw.log</string>
+
+	<key>StandardErrorPath</key>
+	<string>/var/log/udp2raw.log</string>
+
+	<key>UserName</key>
+	<string>root</string>
+
+	<key>GroupName</key>
+	<string>wheel</string>
+
+	<key>ProcessType</key>
+	<string>Background</string>
+</dict>
+</plist>

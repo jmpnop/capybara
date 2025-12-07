@@ -1,0 +1,49 @@
+╔════════════════════════════════════════════════════════════════════════════╗
+║                    CAPYBARA VPN INSTALLER PACKAGE CONTENTS                 ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+📦 BUNDLED APPLICATIONS (3 Apps)
+═══════════════════════════════════════════════════════════════════════════
+
+1. CapybaraWG.app
+   • GUI VPN application with automatic config import
+   • Universal binary (Intel + Apple Silicon)
+   • macOS 12.0+ required
+   • Location: /Applications/CapybaraWG.app
+   
+2. Capybara VPN.app
+   • CLI VPN launcher for legacy macOS
+   • Bash script wrapper
+   • macOS 10.13+ supported
+   • Location: /Applications/Capybara VPN.app
+   
+3. Uninstall Capybara VPN.app
+   • Interactive uninstaller
+   • Safe removal of all components
+   • Location: /Applications/Uninstall Capybara VPN.app
+
+📦 BUNDLED COMMAND-LINE TOOLS
+═══════════════════════════════════════════════════════════════════════════
+
+4. udp2raw
+   • Traffic obfuscation (UDP → fake TCP)
+   • Bypasses DPI censorship
+   • Location: /usr/local/bin/udp2raw
+   
+5. wg
+   • WireGuard management CLI
+   • Location: /usr/local/bin/wg
+   
+6. wg-quick
+   • WireGuard setup script
+   • Location: /usr/local/bin/wg-quick
+
+📄 CONFIGURATION FILES
+═══════════════════════════════════════════════════════════════════════════
+
+7. WireGuard Configuration
+   • User-specific VPN settings
+   • Location: ~/Library/Application Support/CapybaraVPN/<user>_wireguard.conf
+   • Backup: ~/Desktop/CapybaraWG-<user>.conf
+
+See full details in this directory for complete functionality breakdown.

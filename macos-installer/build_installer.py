@@ -70,22 +70,45 @@ class InstallerBuilder:
         for script in scripts_dest.glob("*"):
             os.chmod(script, 0o755)
 
+        # Generate proper configs with obfuscation
+        print(f"   Generating configs with obfuscation for '{self.username}'...")
+        generate_cmd = [
+            "python3",
+            str(self.installer_root / "generate_configs.py"),
+            self.username
+        ]
+        result = subprocess.run(generate_cmd, capture_output=True, text=True)
+        if result.returncode != 0:
+            print(f"   ❌ ERROR: Config generation failed!")
+            print(result.stderr)
+            raise RuntimeError("Config generation failed")
+
         # Create temp directory for configs
         temp_config_dir = self.build_dir / "payload" / "tmp" / "capybara-vpn-install"
         temp_config_dir.mkdir(parents=True)
 
-        # Copy user-specific configs
-        print(f"   Copying VPN configs for '{self.username}'...")
+        # Copy generated configs
+        generated_dir = self.installer_root / "generated_configs"
 
-        # Copy WireGuard config
-        wg_config = self.vpn_clients_dir / f"{self.username}_wireguard.conf"
+        # Copy WireGuard config (with obfuscation hooks)
+        wg_config = generated_dir / f"{self.username}_wireguard.conf"
+        if not wg_config.exists():
+            raise RuntimeError(f"Generated config not found: {wg_config}")
         shutil.copy(wg_config, temp_config_dir)
+        print(f"   ✓ WireGuard config (with obfuscation)")
+
+        # Copy LaunchDaemon plist
+        launchdaemon = generated_dir / "com.capybara.udp2raw.plist"
+        if not launchdaemon.exists():
+            raise RuntimeError(f"Generated LaunchDaemon not found: {launchdaemon}")
+        shutil.copy(launchdaemon, temp_config_dir)
+        print(f"   ✓ LaunchDaemon (for auto-starting udp2raw)")
 
         # Create config.txt with username
         config_file = temp_config_dir / "config.txt"
         config_file.write_text(self.username)
 
-        print(f"✅ Build directory prepared")
+        print(f"✅ Build directory prepared with validated configs")
 
     def download_udp2raw(self):
         """Embed architecture-specific udp2raw binary"""

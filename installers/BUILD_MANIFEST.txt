@@ -1,0 +1,56 @@
+Capybara VPN Installer Packages
+Built: December 5, 2025 08:39
+
+Features in All Packages:
+✅ CapybaraWG - GUI app with AUTOMATIC tunnel import on first launch
+✅ Capybara VPN - CLI launcher for legacy macOS 10.13+
+✅ Self-signed apps (no Apple Developer account needed)
+✅ Bundled WireGuard tools (architecture-specific)
+✅ Bundled udp2raw for traffic obfuscation
+✅ Pre-configured VPN settings per user
+✅ Gatekeeper bypass instructions included
+
+Available Packages:
+==================
+
+arky:
+  - CapybaraVPN-arky-AppleSilicon.pkg (6.1 MB) - for M1/M2/M3 Macs
+  - CapybaraVPN-arky-Intel.pkg (8.8 MB) - for Intel Macs
+
+bnung2:
+  - CapybaraVPN-bnung2-AppleSilicon.pkg (6.1 MB) - for M1/M2/M3 Macs
+  - CapybaraVPN-bnung2-Intel.pkg (8.8 MB) - for Intel Macs
+
+olga:
+  - CapybaraVPN-olga-AppleSilicon.pkg (6.1 MB) - for M1/M2/M3 Macs
+  - CapybaraVPN-olga-Intel.pkg (8.8 MB) - for Intel Macs
+
+pasha:
+  - CapybaraVPN-pasha-AppleSilicon.pkg (6.1 MB) - for M1/M2/M3 Macs
+  - CapybaraVPN-pasha-Intel.pkg (8.8 MB) - for Intel Macs
+
+phil:
+  - CapybaraVPN-phil-AppleSilicon.pkg (6.1 MB) - for M1/M2/M3 Macs
+  - CapybaraVPN-phil-Intel.pkg (8.8 MB) - for Intel Macs
+
+sergej:
+  - CapybaraVPN-sergej-AppleSilicon.pkg (6.1 MB) - for M1/M2/M3 Macs
+  - CapybaraVPN-sergej-Intel.pkg (8.8 MB) - for Intel Macs
+
+Total: 12 packages (6 users × 2 architectures)
+
+Installation Instructions:
+========================
+1. Double-click the appropriate .pkg file for your Mac
+2. Follow the installer
+3. After installation, open Terminal and run:
+   xattr -cr "/Applications/CapybaraWG.app"
+   xattr -cr "/Applications/Capybara VPN.app"
+   xattr -cr "/Applications/Uninstall Capybara VPN.app"
+4. Launch CapybaraWG from Applications
+5. Tunnel will be automatically imported - just toggle to activate!
+
+User Experience:
+===============
+- CapybaraWG (macOS 10.14+): Launch app → tunnel auto-imported → activate!
+- Capybara VPN (macOS 10.13+): Launch app → click Connect
